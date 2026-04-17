@@ -512,9 +512,14 @@ class TestConfigDownload(SafeTestCase):
             config_file = config_dir / "config.json"
             args = MagicMock(config_action="download", url="https://example.com/config.json")
 
+            def fake_download(url, dest):
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text('{"machine": "downloaded"}')
+                return True, None
+
             with patch.object(ws, "CONFIG_DIR", config_dir), \
                  patch.object(ws, "CONFIG_FILE", config_file), \
-                 patch.object(ws, "download_url", return_value=(True, None)) as mock_dl:
+                 patch.object(ws, "download_url", side_effect=fake_download) as mock_dl:
                 ws.cmd_config(args)
 
             mock_dl.assert_called_once()
