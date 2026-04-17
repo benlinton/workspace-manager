@@ -95,3 +95,33 @@ This avoids mixing "stuff I haven't sorted" with "stuff I'm actively messing wit
 - Flat — no subdirectories, no organization inside it
 - Portable — syncs across machines like any other top-level directory
 - Manageable — toolkits can include scripts to list stale items or prompt cleanup
+
+## Stale repo detection and archival
+
+A command or skill that finds repos you haven't touched in a while and offers to archive them. Over time workspaces accumulate cloned repos that served a short-lived purpose — a one-off PR, a spike that went nowhere, a dependency you read once. These add noise to directory listings and AI context.
+
+### What "untouched" means
+
+Several signals could contribute:
+- **Last commit date** — no commits from you in N months
+- **Last filesystem access** — no recent `git checkout`, `git pull`, or file edits
+- **Branch state** — still on `main` with no local branches (never started real work)
+- **Relationship to other repos** — no other project depends on it (not a toolkit in active use)
+
+A composite staleness score is probably better than any single metric. The threshold should be configurable.
+
+### What "archive" means
+
+Options from least to most aggressive:
+1. **Report only** — list stale repos, let the user decide
+2. **Move to an archive directory** — e.g., `~/Workspace/archive/code/org/repo`, preserving the original path structure so it can be restored
+3. **Remove and re-clone on demand** — delete the local clone but keep it in config so `workspace init` can bring it back (only works for repos with no unpushed local work)
+
+Option 2 is the safest default. Moving preserves history and local branches. The archive directory could be gitignored or excluded from AI context walks.
+
+### Interface questions
+
+- Should this be a subcommand (`workspace archive`, `workspace stale`) or a standalone skill/hook?
+- Interactive or batch? Listing candidates and prompting per-repo is safest. A `--dry-run` flag is non-negotiable.
+- Should archived repos be tracked in config so `workspace status` can report them?
+- Could this run on a schedule (e.g., monthly prompt) rather than only on demand?

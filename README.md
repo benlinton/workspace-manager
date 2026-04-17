@@ -47,10 +47,10 @@ cd workspace-manager
 │
 ├── studio/                  # Creative production
 │   ├── productions/         #   Video projects
-│   ├── music/               #   Music projects
+│   ├── music/               #   Music library
 │   ├── sound-effects/       #   Sound effect libraries
 │   ├── design/              #   Standalone design work (logos, branding, UI mockups)
-│   └── project-media/       #   Shared media assets and caches
+│   └── project-media/       #   Staged media assets and caches
 │
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
 │   ├── my-mcp-server/       #   Example: an MCP server you built
