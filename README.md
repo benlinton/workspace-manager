@@ -1,6 +1,6 @@
 # Workspace Manager
 
-A CLI tool and design system for organizing `~/Workspace/` across machines.
+An opinionated system for organizing workspaces and projects across machines.
 
 ## Quick Start
 
