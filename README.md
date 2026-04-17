@@ -36,10 +36,10 @@ cd workspace-manager
 │   └── experiments/         #   Prototypes, experiments, and labs
 │
 ├── knowledge/               # PKM, reference material, and filed documents
-│   ├── second-brain/        #   Primary PKM vault (active writing, note-taking)
-│   ├── bytebytego/          #   System design reference (read-mostly)
-│   ├── contracts/           #   Legal agreements (filed)
-│   └── ...                  #   Receipts, admin paperwork, work documents, etc.
+│   ├── second-brain/        #   Primary personal knowledge management
+│   ├── document-vault/      #   Document retreival system
+│   ├── bytebytego/          #   Example system design reference (read-only)
+│   └── ...                  #   Documents, guides, runbooks, courses, help, etc.
 │
 ├── research/                # Research, analysis, and intelligence gathering (non-code)
 │   ├── market-research/     #   Market research and analysis
