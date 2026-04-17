@@ -1,0 +1,82 @@
+{
+  "machine": "macbook-personal",
+  "workspace_root": "~/Workspace",
+  "dotfiles": "~/.local/share/chezmoi",
+  "code": {
+    "orgs": [
+      "personal",
+      "org-1",
+      "org-2",
+      "third-party",
+      "experiments"
+    ],
+    "repos": [
+      {
+        "url": "git@github.com:you/workspace-manager.git",
+        "path": "code/personal/workspace-manager"
+      },
+      {
+        "url": "git@github.com:you/some-org-1-project.git",
+        "path": "code/org-1/some-org-1-project"
+      }
+    ]
+  },
+  "research": {
+    "repos": [
+      {
+        "url": "git@github.com:you/market-research.git",
+        "path": "research/market-research"
+      }
+    ]
+  },
+  "studio": {
+    "categories": [
+      "productions",
+      "music",
+      "sound-effects",
+      "design",
+      "project-media"
+    ]
+  },
+  "knowledge": {
+    "repos": [
+      {
+        "url": "git@github.com:you/second-brain.git",
+        "path": "knowledge/second-brain"
+      },
+      {
+        "url": "https://github.com/bytebytego/system-design.git",
+        "path": "knowledge/bytebytego"
+      }
+    ]
+  },
+  "toolkits": {
+    "repos": [
+      {
+        "url": "git@github.com:you/shared-context.git",
+        "path": "toolkits/shared-context"
+      },
+      {
+        "url": "git@github.com:you/shared-hooks.git",
+        "path": "toolkits/shared-hooks"
+      },
+      {
+        "url": "git@github.com:you/my-mcp-server.git",
+        "path": "toolkits/my-mcp-server"
+      },
+      {
+        "url": "https://github.com/someone/useful-tool.git",
+        "path": "toolkits/useful-tool"
+      }
+    ]
+  },
+  "machines": {
+    "macbook-personal": {
+      "skip": []
+    },
+    "macbook-work": {
+      "skip": ["studio", "research"],
+      "code_orgs": ["org-1", "third-party"]
+    }
+  }
+}

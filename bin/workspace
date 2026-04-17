@@ -1,0 +1,624 @@
+#!/usr/bin/env python3
+"""Workspace manager — bootstrap and maintain ~/Workspace/ across machines."""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import urllib.request
+import urllib.error
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+CONFIG_DIR = PROJECT_ROOT / "config"
+CONFIG_FILE = CONFIG_DIR / "config.json"
+CONFIG_EXAMPLE = PROJECT_ROOT / "templates" / "config.example.json"
+DEFAULT_WORKSPACE_ROOT = Path.home() / "Workspace"
+EXPECTED_REPO_PATH = "code/personal/workspace-manager"
+
+# Top-level directories that are always created (unless skipped by machine config)
+TOP_LEVEL_DIRS = ["code", "research", "studio", "knowledge", "toolkits"]
+
+
+def load_config():
+    if not CONFIG_FILE.exists():
+        print(f"Error: {CONFIG_FILE} not found.")
+        print(f"Run './bin/workspace init' to set up config.")
+        sys.exit(1)
+    with open(CONFIG_FILE) as f:
+        return json.load(f)
+
+
+def get_workspace_root(config):
+    root = config.get("workspace_root", "~/Workspace")
+    return Path(root).expanduser()
+
+
+def get_machine_config(config):
+    machine = config.get("machine")
+    if not machine:
+        return {}
+    return config.get("machines", {}).get(machine, {})
+
+
+def download_url(url, dest):
+    """Download a file from a URL to a local path."""
+    try:
+        urllib.request.urlretrieve(url, str(dest))
+        return True, None
+    except urllib.error.URLError as e:
+        return False, str(e)
+    except Exception as e:
+        return False, str(e)
+
+
+def cmd_init(args):
+    """Initialize the workspace: set up config, move repo if needed, create tree, clone repos."""
+
+    # Step 1: Set up config if it doesn't exist
+    if not CONFIG_FILE.exists():
+        if hasattr(args, "config_repo") and args.config_repo:
+            # Clone private config repo into config/
+            if CONFIG_DIR.exists():
+                print(f"Error: {CONFIG_DIR} exists but has no config.json.")
+                print(f"Remove it or add a config.json manually.")
+                return
+            print(f"Cloning config repo...")
+            result = subprocess.run(
+                ["git", "clone", args.config_repo, str(CONFIG_DIR)],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                print(f"Error cloning config repo: {result.stderr.strip()}")
+                sys.exit(1)
+            print(f"Cloned config repo to {CONFIG_DIR}")
+            if not CONFIG_FILE.exists():
+                print(f"Warning: cloned repo has no config.json. Add one and re-run.")
+                return
+        elif hasattr(args, "config_url") and args.config_url:
+            # Download config from a URL
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            print(f"Downloading config from {args.config_url}...")
+            ok, err = download_url(args.config_url, CONFIG_FILE)
+            if not ok:
+                print(f"Error downloading config: {err}")
+                sys.exit(1)
+            print(f"Downloaded to {CONFIG_FILE}")
+        elif CONFIG_EXAMPLE.exists():
+            print(f"No config.json found. Copying from example...")
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            shutil.copy(str(CONFIG_EXAMPLE), str(CONFIG_FILE))
+            print(f"Created {CONFIG_FILE}")
+            print(f"Edit it with your repos and machine name,")
+            print(f"then run './bin/workspace init' again.")
+            print()
+            print(f"To use an existing config instead:")
+            print(f"  ./bin/workspace init --config-repo <git-url>   # clone a config repo")
+            print(f"  ./bin/workspace init --config-url <url>        # download a single file")
+            return
+        else:
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            print(f"No config.json or example found.")
+            print(f"Options:")
+            print(f"  1. Add a config.json to {CONFIG_DIR}")
+            print(f"  2. ./bin/workspace init --config-repo <git-url>")
+            print(f"  3. ./bin/workspace init --config-url <url>")
+            return
+
+    config = load_config()
+    workspace_root = get_workspace_root(config)
+    machine_config = get_machine_config(config)
+    skip_dirs = set(machine_config.get("skip", []))
+
+    # Step 2: Check if this repo is in the right place
+    expected_path = workspace_root / EXPECTED_REPO_PATH
+    if PROJECT_ROOT != expected_path:
+        print(f"This repo is at: {PROJECT_ROOT}")
+        print(f"Expected:        {expected_path}")
+        if args.dry_run:
+            print(f"[dry-run] Would move repo to {expected_path}")
+        else:
+            print(f"Moving repo to {expected_path}...")
+            expected_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(PROJECT_ROOT), str(expected_path))
+            print(f"Moved. Re-run the script from the new location:")
+            print(f"  cd {expected_path} && ./bin/workspace init")
+        return
+
+    # Step 3: Create top-level directories
+    print(f"Workspace root: {workspace_root}")
+    for d in TOP_LEVEL_DIRS:
+        if d in skip_dirs:
+            print(f"  Skipping {d}/ (machine config)")
+            continue
+        dir_path = workspace_root / d
+        if dir_path.exists():
+            print(f"  {d}/ exists")
+        else:
+            if args.dry_run:
+                print(f"  [dry-run] Would create {d}/")
+            else:
+                dir_path.mkdir(parents=True, exist_ok=True)
+                print(f"  Created {d}/")
+
+    # Step 4: Create org directories under code/
+    if "code" not in skip_dirs:
+        orgs = config.get("code", {}).get("orgs", [])
+        code_orgs_filter = machine_config.get("code_orgs")
+        for org in orgs:
+            if code_orgs_filter and org not in code_orgs_filter:
+                print(f"  Skipping code/{org}/ (machine config)")
+                continue
+            org_path = workspace_root / "code" / org
+            if org_path.exists():
+                print(f"  code/{org}/ exists")
+            else:
+                if args.dry_run:
+                    print(f"  [dry-run] Would create code/{org}/")
+                else:
+                    org_path.mkdir(parents=True, exist_ok=True)
+                    print(f"  Created code/{org}/")
+
+    # Step 5: Create studio category directories
+    if "studio" not in skip_dirs:
+        categories = config.get("studio", {}).get("categories", [])
+        for cat in categories:
+            cat_path = workspace_root / "studio" / cat
+            if cat_path.exists():
+                print(f"  studio/{cat}/ exists")
+            else:
+                if args.dry_run:
+                    print(f"  [dry-run] Would create studio/{cat}/")
+                else:
+                    cat_path.mkdir(parents=True, exist_ok=True)
+                    print(f"  Created studio/{cat}/")
+
+    # Step 6: Create dotfiles symlink
+    dotfiles_target_str = config.get("dotfiles", "~/.local/share/chezmoi")
+    dotfiles_target = Path(dotfiles_target_str).expanduser()
+    dotfiles_link = workspace_root / "dotfiles"
+    if dotfiles_link.exists() or dotfiles_link.is_symlink():
+        print(f"  dotfiles symlink exists")
+    elif dotfiles_target.exists():
+        if args.dry_run:
+            print(f"  [dry-run] Would symlink dotfiles -> {dotfiles_target}")
+        else:
+            dotfiles_link.symlink_to(dotfiles_target)
+            print(f"  Symlinked dotfiles -> {dotfiles_target}")
+    else:
+        print(f"  Skipping dotfiles symlink ({dotfiles_target} not found)")
+
+    # Step 7: Clone repos
+    if not args.dry_run:
+        print()
+    clone_repos(config, workspace_root, skip_dirs, machine_config, args.dry_run)
+
+    print()
+    print("Done.")
+
+
+def clone_repos(config, workspace_root, skip_dirs, machine_config, dry_run):
+    """Clone all repos defined in config."""
+    code_orgs_filter = machine_config.get("code_orgs")
+
+    # studio is excluded — large binary assets use Git LFS/cloud storage, not git clone
+    sections = ["code", "research", "knowledge", "toolkits"]
+    for section in sections:
+        if section in skip_dirs:
+            continue
+        repos = config.get(section, {}).get("repos", [])
+        for repo in repos:
+            url = repo["url"]
+            rel_path = repo["path"]
+
+            # Skip code repos not in machine's org filter
+            if section == "code" and code_orgs_filter:
+                parts = rel_path.split("/")
+                if len(parts) >= 2:
+                    org = parts[1]
+                    if org not in code_orgs_filter:
+                        continue
+
+            full_path = workspace_root / rel_path
+            if full_path.exists():
+                print(f"  {rel_path} exists")
+                continue
+
+            if dry_run:
+                print(f"  [dry-run] Would clone {url} -> {rel_path}")
+            else:
+                print(f"  Cloning {url} -> {rel_path}...")
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                result = subprocess.run(
+                    ["git", "clone", url, str(full_path)],
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    print(f"    Error: {result.stderr.strip()}")
+                else:
+                    print(f"    Cloned.")
+
+
+def cmd_config(args):
+    """Show, edit, clone, or download the config."""
+    if args.config_action == "show":
+        if not CONFIG_FILE.exists():
+            print(f"No config found. Run './bin/workspace init' to set up.")
+            return
+        with open(CONFIG_FILE) as f:
+            print(f.read())
+    elif args.config_action == "edit":
+        editor = os.environ.get("EDITOR", "vim")
+        if not CONFIG_FILE.exists():
+            print(f"No config found. Run './bin/workspace init' to set up.")
+            return
+        subprocess.run([editor, str(CONFIG_FILE)])
+    elif args.config_action == "path":
+        print(CONFIG_DIR)
+    elif args.config_action == "clone":
+        if not args.url:
+            print("Error: provide a repo URL.")
+            print("  ./bin/workspace config clone <url>")
+            return
+        if CONFIG_DIR.exists():
+            print(f"Config directory already exists at {CONFIG_DIR}")
+            print(f"Remove it first if you want to re-clone.")
+            return
+        print(f"Cloning config repo...")
+        result = subprocess.run(
+            ["git", "clone", args.url, str(CONFIG_DIR)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"Error: {result.stderr.strip()}")
+        else:
+            print(f"Cloned to {CONFIG_DIR}")
+    elif args.config_action == "download":
+        if not args.url:
+            print("Error: provide a URL to a config.json file.")
+            print("  ./bin/workspace config download <url>")
+            return
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        if CONFIG_FILE.exists():
+            print(f"Config already exists at {CONFIG_FILE}")
+            print(f"Remove it first if you want to re-download.")
+            return
+        print(f"Downloading config...")
+        ok, err = download_url(args.url, CONFIG_FILE)
+        if not ok:
+            print(f"Error: {err}")
+        else:
+            print(f"Downloaded to {CONFIG_FILE}")
+
+
+def cmd_pull(args):
+    """Pull latest changes for all repos in the workspace."""
+    if not CONFIG_FILE.exists():
+        print("No config found. Run './bin/workspace init' to set up.")
+        return
+
+    config = load_config()
+    workspace_root = get_workspace_root(config)
+    machine_config = get_machine_config(config)
+    skip_dirs = set(machine_config.get("skip", []))
+    section_filter = args.section if hasattr(args, "section") and args.section else None
+
+    # studio is excluded — large binary assets use Git LFS/cloud storage, not git clone
+    sections = ["code", "research", "knowledge", "toolkits"]
+    pulled = 0
+    errors = 0
+
+    for section in sections:
+        if section in skip_dirs:
+            continue
+        if section_filter and section != section_filter:
+            continue
+        repos = config.get(section, {}).get("repos", [])
+        for repo in repos:
+            rel_path = repo["path"]
+            full_path = workspace_root / rel_path
+            if not full_path.exists():
+                continue
+            if not (full_path / ".git").exists():
+                continue
+
+            print(f"  Pulling {rel_path}...")
+            result = subprocess.run(
+                ["git", "-C", str(full_path), "pull"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                print(f"    Error: {result.stderr.strip()}")
+                errors += 1
+            else:
+                output = result.stdout.strip()
+                if output == "Already up to date.":
+                    print(f"    Up to date.")
+                else:
+                    print(f"    Updated.")
+                pulled += 1
+
+    print()
+    print(f"Pulled {pulled} repos." + (f" {errors} errors." if errors else ""))
+
+    if errors:
+        sys.exit(1)
+
+
+def cmd_validate(args):
+    """Validate config and check workspace tree against config."""
+    if not CONFIG_FILE.exists():
+        print("No config found. Run './bin/workspace init' to set up.")
+        sys.exit(1)
+
+    # Config validation
+    try:
+        config = load_config()
+    except (json.JSONDecodeError, Exception) as e:
+        print(f"Error: invalid config.json: {e}")
+        sys.exit(1)
+
+    workspace_root = get_workspace_root(config)
+    machine_config = get_machine_config(config)
+    skip_dirs = set(machine_config.get("skip", []))
+
+    errors = []
+    warnings = []
+
+    # Check required config fields
+    if not config.get("machine"):
+        errors.append("Config missing 'machine' field")
+    if not config.get("workspace_root"):
+        warnings.append("Config missing 'workspace_root' — using default ~/Workspace")
+
+    # Check workspace root exists
+    if not workspace_root.exists():
+        errors.append(f"Workspace root does not exist: {workspace_root}")
+
+    # Check top-level directories
+    for d in TOP_LEVEL_DIRS:
+        if d in skip_dirs:
+            continue
+        dir_path = workspace_root / d
+        if not dir_path.exists():
+            errors.append(f"Missing directory: {d}/")
+
+    # Check org directories
+    orgs = config.get("code", {}).get("orgs", [])
+    code_orgs_filter = machine_config.get("code_orgs")
+    for org in orgs:
+        if code_orgs_filter and org not in code_orgs_filter:
+            continue
+        org_path = workspace_root / "code" / org
+        if not org_path.exists():
+            errors.append(f"Missing org directory: code/{org}/")
+
+    # Check repos
+    sections = ["code", "research", "knowledge", "toolkits"]
+    for section in sections:
+        if section in skip_dirs:
+            continue
+        repos = config.get(section, {}).get("repos", [])
+        for repo in repos:
+            rel_path = repo["path"]
+            full_path = workspace_root / rel_path
+            if not full_path.exists():
+                errors.append(f"Missing repo: {rel_path}")
+
+    # Check for extra directories not in config (warnings only)
+    for d in TOP_LEVEL_DIRS:
+        if d in skip_dirs:
+            continue
+        dir_path = workspace_root / d
+        if not dir_path.exists():
+            continue
+        if d == "code":
+            known_orgs = set(orgs)
+            for child in dir_path.iterdir():
+                if child.is_dir() and child.name not in known_orgs:
+                    warnings.append(f"Extra directory not in config: code/{child.name}/")
+
+    # Report
+    if errors:
+        print("Errors:")
+        for e in errors:
+            print(f"  {e}")
+    if warnings:
+        print("Warnings:")
+        for w in warnings:
+            print(f"  {w}")
+    if not errors and not warnings:
+        print("Workspace is in sync with config.")
+
+    if errors:
+        sys.exit(1)
+
+
+def cmd_status(args):
+    """Show workspace status: what exists, what's missing."""
+    if not CONFIG_FILE.exists():
+        print("No config found. Run './bin/workspace init' to set up.")
+        return
+
+    config = load_config()
+    workspace_root = get_workspace_root(config)
+    machine_config = get_machine_config(config)
+    skip_dirs = set(machine_config.get("skip", []))
+
+    print(f"Machine: {config.get('machine', 'not set')}")
+    print(f"Workspace: {workspace_root}")
+    print(f"Config: {CONFIG_DIR}")
+    is_git = (CONFIG_DIR / ".git").exists()
+    print(f"Config repo: {'yes' if is_git else 'no (local only)'}")
+    print()
+
+    # Check top-level dirs
+    for d in TOP_LEVEL_DIRS:
+        dir_path = workspace_root / d
+        if d in skip_dirs:
+            status = "skipped"
+        elif dir_path.exists():
+            status = "ok"
+        else:
+            status = "MISSING"
+        print(f"  {d:20s} {status}")
+
+    # Check repos
+    print()
+    sections = ["code", "research", "knowledge", "toolkits"]
+    for section in sections:
+        if section in skip_dirs:
+            continue
+        repos = config.get(section, {}).get("repos", [])
+        for repo in repos:
+            rel_path = repo["path"]
+            full_path = workspace_root / rel_path
+            status = "ok" if full_path.exists() else "MISSING"
+            print(f"  {rel_path:50s} {status}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="workspace",
+        description="Bootstrap and maintain ~/Workspace/ across machines.",
+        epilog="""
+config setup (choose one):
+  Copy from example:   ./bin/workspace init
+  Clone a config repo: ./bin/workspace init --config-repo <git-url>
+  Download a file:     ./bin/workspace init --config-url <url>
+
+The config lives in config/config.json (gitignored). It can be:
+  - A plain file copied from templates/config.example.json
+  - Part of a git-cloned private config repo in config/
+  - Downloaded from a URL (e.g. raw GitHub file from a config library)
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    subparsers = parser.add_subparsers(dest="command")
+
+    # init
+    init_parser = subparsers.add_parser(
+        "init",
+        help="Initialize the workspace",
+        description="Set up config, create directory tree, and clone repos.",
+        epilog="""
+config sources (mutually exclusive):
+  No flags:       copy from templates/config.example.json
+  --config-repo:  git clone a private repo into config/
+  --config-url:   download a single config.json from a URL
+
+examples:
+  ./bin/workspace init
+  ./bin/workspace init --config-repo git@github.com:you/workspace-configs.git
+  ./bin/workspace init --config-url https://raw.githubusercontent.com/you/configs/main/macbook.json
+  ./bin/workspace init --dry-run
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    init_parser.add_argument(
+        "--dry-run", action="store_true",
+        help="show what would be done without doing it",
+    )
+    init_parser.add_argument(
+        "--config-repo", dest="config_repo",
+        help="git URL of a private config repo to clone into config/",
+    )
+    init_parser.add_argument(
+        "--config-url", dest="config_url",
+        help="URL to download a config.json file from (e.g. raw GitHub URL)",
+    )
+
+    # config
+    config_parser = subparsers.add_parser(
+        "config",
+        help="Show, edit, clone, or download config",
+        description="Manage the workspace config file.",
+        epilog="""
+actions:
+  show (default)  print config.json to stdout
+  edit            open config.json in $EDITOR
+  path            print the config directory path
+  clone <url>     git clone a config repo into config/
+  download <url>  download a config.json from a URL
+
+examples:
+  ./bin/workspace config
+  ./bin/workspace config edit
+  ./bin/workspace config clone git@github.com:you/workspace-configs.git
+  ./bin/workspace config download https://raw.githubusercontent.com/you/configs/main/macbook.json
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    config_parser.add_argument(
+        "config_action",
+        nargs="?",
+        default="show",
+        choices=["show", "edit", "path", "clone", "download"],
+        help="action to perform (default: show)",
+    )
+    config_parser.add_argument(
+        "url",
+        nargs="?",
+        help="URL for clone or download actions",
+    )
+
+    # status
+    subparsers.add_parser(
+        "status",
+        help="Show workspace status",
+        description="Check what exists and what's missing in the workspace.",
+    )
+
+    # pull
+    pull_parser = subparsers.add_parser(
+        "pull",
+        help="Pull latest changes for all repos",
+        description="Run git pull in every cloned repo in the workspace.",
+        epilog="""
+examples:
+  ./bin/workspace pull              # pull all repos
+  ./bin/workspace pull toolkits     # pull only toolkits repos
+  ./bin/workspace pull code         # pull only code repos
+""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    pull_parser.add_argument(
+        "section",
+        nargs="?",
+        help="limit to a specific section (code, research, knowledge, toolkits)",
+    )
+
+    # validate
+    subparsers.add_parser(
+        "validate",
+        help="Validate config and check workspace tree against config",
+        description="Check config.json is valid and the directory tree matches. "
+                    "Errors (exit 1) for missing directories/repos. "
+                    "Warnings (exit 0) for extra directories not in config.",
+    )
+
+    args = parser.parse_args()
+
+    if args.command is None:
+        parser.print_help()
+    elif args.command == "init":
+        cmd_init(args)
+    elif args.command == "config":
+        cmd_config(args)
+    elif args.command == "status":
+        cmd_status(args)
+    elif args.command == "pull":
+        cmd_pull(args)
+    elif args.command == "validate":
+        cmd_validate(args)
+
+
+if __name__ == "__main__":
+    main()

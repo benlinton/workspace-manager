@@ -1,0 +1,197 @@
+# Workspace Manager
+
+A CLI tool and design system for organizing `~/Workspace/` across machines.
+
+## Quick Start
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/benlinton/workspace-manager.git
+cd workspace-manager
+
+# 2. Initialize — generates config from example on first run
+./bin/workspace init
+
+# 3. Edit the generated config with your repos and machine name
+$EDITOR config/config.json
+
+# 4. Run init again to create directories and clone repos
+./bin/workspace init
+
+# Preview what init would do without making changes
+./bin/workspace init --dry-run
+```
+
+### Alternative config setup
+
+Instead of editing the example, you can pull config from a private repo or URL:
+
+```bash
+# Clone a private config repo into config/
+./bin/workspace init --config-repo git@github.com:you/workspace-configs.git
+
+# Download a single config file from a URL
+./bin/workspace init --config-url https://raw.githubusercontent.com/you/configs/main/macbook.json
+```
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `workspace init` | Create directory tree and clone repos from config |
+| `workspace init --dry-run` | Preview what init would do |
+| `workspace init --config-repo <url>` | Clone a private config repo |
+| `workspace init --config-url <url>` | Download config from a URL |
+| `workspace status` | Show what exists and what's missing |
+| `workspace config` | Print config.json to stdout |
+| `workspace config edit` | Open config.json in $EDITOR |
+| `workspace config path` | Print config directory path |
+| `workspace config clone <url>` | Clone a config repo into config/ |
+| `workspace config download <url>` | Download a config.json from a URL |
+| `workspace pull` | Pull latest changes for all repos |
+| `workspace pull <section>` | Pull only repos in a specific section (code, research, etc.) |
+| `workspace validate` | Validate config and check directory tree is in sync |
+
+## Configuration
+
+Config lives in `config/config.json` (gitignored). See [templates/config.example.json](templates/config.example.json) for the full schema.
+
+Key fields:
+- **`machine`** — name of this machine (used to look up per-machine settings)
+- **`workspace_root`** — path to workspace root (default: `~/Workspace`)
+- **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
+- **`code.orgs`** — list of org directories to create under `code/`
+- **`code.repos`** / **`research.repos`** / **`knowledge.repos`** / **`toolkits.repos`** — repos to clone, each with `url` and `path`
+- **`studio.categories`** — subdirectories to create under `studio/`
+- **`machines.<name>.skip`** — top-level directories to skip on this machine
+- **`machines.<name>.code_orgs`** — limit which code orgs are set up on this machine
+
+## Layout
+
+```
+~/Workspace/
+├── code/                    # All software projects, grouped by org
+│   ├── personal/            #   Personal projects
+│   ├── org-1/               #   Work projects for org-1
+│   ├── org-2/               #   Work projects for org-2
+│   ├── third-party/         #   Third-party repos for reference or contribution
+│   └── experiments/         #   Prototypes, experiments, and labs
+│
+├── research/                # Research, analysis, and intelligence gathering (non-code)
+│   ├── market-research/     #   Market research and analysis
+│   └── ...                  #   Health analysis, business strategy, deep-dives, etc.
+│
+├── studio/                  # Creative production
+│   ├── productions/         #   Video projects
+│   ├── music/               #   Music projects
+│   ├── sound-effects/       #   Sound effect libraries
+│   ├── design/              #   Standalone design work (logos, branding, UI mockups)
+│   └── project-media/       #   Shared media assets and caches
+│
+├── knowledge/               # PKM, reference material, and filed documents
+│   ├── second-brain/        #   Primary PKM vault (active writing, note-taking)
+│   ├── bytebytego/          #   System design reference (read-mostly)
+│   ├── contracts/           #   Legal agreements (filed)
+│   └── ...                  #   Receipts, admin paperwork, work documents, etc.
+│
+├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
+│   ├── shared-context/      #   Your repo — reusable context files
+│   ├── shared-hooks/        #   Your repo — shared hook scripts
+│   ├── shared-templates/    #   Your repo — project scaffolding templates
+│   ├── my-mcp-server/       #   Your repo — an MCP server you built
+│   ├── useful-tool/         #   Third-party — cloned from someone else
+│   └── ...                  #   Grows as your AI tooling needs evolve
+│
+└── dotfiles -> <configured dotfiles path>
+```
+
+<details>
+<summary><strong>Principles</strong></summary>
+
+### Two levels to any project, three where it earns its keep
+
+The target depth is `Workspace/<grouping>/<project>/`. The only exception is `code/`, which uses `Workspace/code/<org>/<project>/` — the org layer drives context-switching efficiency and scopes tab-completion.
+
+| Path pattern | Depth | Why |
+|---|---|---|
+| `code/<org>/<project>` | 3 | Org grouping maps to how you switch between clients/employers |
+| `research/<project>` | 2 | Flat — no sub-grouping needed |
+| `studio/<category>` or `studio/<category>/<project>` | 2–3 | Categories organize by medium; some (productions/) have sub-projects |
+| `knowledge/<item>` | 2 | Flat — PKM, reference material, and documents side by side |
+| `toolkits/<tool>` | 2 | Flat — each entry is its own repo |
+
+### Groupings are portable
+
+Every top-level directory is activity-based and universal:
+
+- **code/** — present on every dev machine
+- **research/** — present wherever you do research and analysis
+- **studio/** — present on creative workstations
+- **toolkits/** — present wherever you use AI tools
+- **knowledge/** — present wherever you manage personal knowledge, reference material, or documents
+- **dotfiles** — present wherever you manage config
+
+Only the contents inside `code/` vary by machine (your work laptop might only have `org-1/`, your personal machine has `personal/` + `org-2/`). The top-level structure is identical everywhere.
+
+### Groupings are by nature of work, not who it's for
+
+The "who" (org) is a property of code projects and lives one level down inside `code/`. Everything else is grouped by what kind of work it is.
+
+</details>
+
+<details>
+<summary><strong>Conventions</strong></summary>
+
+### code/
+
+- Organized by org/context. New repos go under the appropriate org directory.
+- `third-party/` repos sit flat — no sub-grouping by contribution vs reference.
+- `experiments/` is for prototypes and experiments. When one graduates, move it to the appropriate org. When one dies, delete it.
+- AI tool source code is developed here like any other project. When ready for consumption, tools are published as standalone repos and cloned into `toolkits/`.
+
+### research/
+
+- Each subdirectory is a focused research or analysis project.
+- These are non-code projects: tax analysis, health research, business strategy, data synthesis, multi-step investigations.
+- The work involves gathering data, scraping, synthesizing, finding insights, and making sense of documents.
+- Many of these are Claude Code working directories — the project structure is whatever the work requires.
+
+### studio/
+
+- Organized by medium/category at the first level.
+- `productions/` contains named video projects (e.g., `my-film-2026/`).
+- `design/` is for standalone design work not tied to a specific production.
+- Production-related design assets stay with their production, not in `design/`.
+- `project-media/` holds shared assets, caches, and clips.
+- Studio projects are not auto-cloned by the workspace script — they typically use Git LFS, cloud storage, or manual backup due to large binary assets.
+
+### knowledge/
+
+- Everything you know, have learned, or have on file — flat, with names that do the work.
+- Entries can be git repos, document stores, synced folders, or any other format.
+- PKM vaults, reference material, context libraries, filed documents — all live here as peers.
+- The distinction between types is obvious from the item name — no subdirectory wrappers needed.
+- Not for active development — if you start contributing significantly to a reference repo, move it to `code/third-party/`.
+
+### toolkits/
+
+- A growing library of AI tools, harnesses, plugins, and shared resources consumed by projects across the workspace.
+- Each entry is its own git repo — a mix of your own published tools and third-party tools cloned from others.
+- Your own tools are developed in `code/`, published as standalone repos, then cloned here. Third-party tools are cloned directly.
+- Projects reference tools by path (e.g., `@path` imports, `.mcp.json` entries, hook paths in settings).
+- This directory grows as your AI tooling needs evolve — there's no fixed set of categories.
+
+### dotfiles
+
+- Symlink to your dotfiles directory, configured via `dotfiles` in config.json.
+- Defaults to `~/.local/share/chezmoi` if not set.
+- Works with any dotfiles manager (chezmoi, yadm, bare git repo, etc.).
+
+</details>
+
+## Documentation
+
+- [docs/workspace-design.md](docs/workspace-design.md) — Design principles and rationale
+- [docs/ai-tooling.md](docs/ai-tooling.md) — AI tool integration and toolkits
+- [docs/sync-workflow.md](docs/sync-workflow.md) — Multi-machine sync strategy
+- [docs/open-questions.md](docs/open-questions.md) — Unresolved design decisions
