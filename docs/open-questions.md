@@ -35,29 +35,21 @@ The directory hierarchy helps all tools (scoping is universal), but config files
 
 For now, the layout doesn't need to change — each tool gets its own config directory at the project level. But this could become a maintenance burden at scale.
 
-## Settings.json duplication across projects
+## Sharing AI config across projects
 
-Since `.claude/settings.json` does NOT cascade from parent directories, each project needs its own copy. For an org with 10 projects that all need the same allowed tools and MCP permissions, that's 10 identical settings files.
+AI tools like Claude Code don't cascade `.claude/settings.json` or `.mcp.json` from parent directories. Each project needs its own copy. For an org with 10 projects that all need the same permissions, that's 10 identical files.
 
-Options:
-- Accept the duplication — it's a small file and rarely changes
-- Use a template in `toolkits/shared-templates/` and copy when creating new projects
-- Use a script that generates settings.json from a shared config
-- Store common settings in `~/.claude/settings.json` (user scope) and only put project-specific overrides in the project
+A potential solution: keep shared configs in a toolkit repo (e.g., `toolkits/ai-settings/`) and symlink into each project:
 
-The user-scope approach works for settings shared across ALL projects but doesn't help with org-specific settings.
+```bash
+ln -s ~/Workspace/toolkits/ai-settings/org-1/settings.json \
+      ~/Workspace/code/org-1/project-a/.claude/settings.json
 
-## MCP server sharing without duplication
+ln -s ~/Workspace/toolkits/ai-settings/org-1/mcp.json \
+      ~/Workspace/code/org-1/project-a/.mcp.json
+```
 
-`.mcp.json` also doesn't cascade. If 5 Org-1 projects all need the same Jira MCP server, you either:
-- Duplicate `.mcp.json` in each project
-- Use a user-scope MCP server (but then it's available in ALL projects, not just Org-1 ones)
-
-There's no clean solution today for org-scoped MCP servers. This is a Claude Code limitation, not a layout problem. Worth revisiting as the tool evolves.
-
-## Toolkit update workflow
-
-Each tool in `toolkits/` is its own git repo. Third-party tools are easy — `git pull`. But for your own tools developed in `code/`, the publish flow is manual: push from `code/`, then pull in `toolkits/`. The `workspace pull` command (planned) will automate pulling all repos across the workspace.
+One source of truth, many projects. The `workspace init` script could automate this if the config specified which settings to symlink per org. Not implemented yet.
 
 ## Pinned versions for toolkits
 
