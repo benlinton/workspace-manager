@@ -59,6 +59,20 @@ There's no clean solution today for org-scoped MCP servers. This is a Claude Cod
 
 Each tool in `toolkits/` is its own git repo. Third-party tools are easy — `git pull`. But for your own tools developed in `code/`, the publish flow is manual: push from `code/`, then pull in `toolkits/`. The `workspace pull` command (planned) will automate pulling all repos across the workspace.
 
+## Pinned versions for toolkits
+
+Currently `workspace init` clones the default branch and `workspace pull` pulls latest. There's no way to pin a tool to a specific version. A `ref` field in config would enable this:
+
+```json
+{
+  "url": "https://github.com/someone/useful-tool.git",
+  "path": "toolkits/useful-tool",
+  "ref": "v1.2.0"
+}
+```
+
+The script would `git checkout` the specified ref after cloning, and `workspace pull` would respect it (pull + checkout ref, or skip pulling pinned repos entirely). Worth building when stability of third-party tools becomes a concern.
+
 ## Should the workspace have a top-level scratch/tmp directory?
 
 A place for unsorted, ephemeral, or throwaway content. Lives inside `~/Workspace/` so it's portable and manageable by toolkits (unlike `/tmp` or `~/Downloads`). Reduces friction when starting quick throwaway work or when you don't know where to put something yet.
