@@ -95,12 +95,10 @@ Key fields:
 │   └── ...                  #   Receipts, admin paperwork, work documents, etc.
 │
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
-│   ├── shared-context/      #   Your repo — reusable context files
-│   ├── shared-hooks/        #   Your repo — shared hook scripts
-│   ├── shared-templates/    #   Your repo — project scaffolding templates
-│   ├── my-mcp-server/       #   Your repo — an MCP server you built
-│   ├── useful-tool/         #   Third-party — cloned from someone else
-│   └── ...                  #   Grows as your AI tooling needs evolve
+│   ├── my-mcp-server/       #   Example: an MCP server you built
+│   ├── shared-context/      #   Example: reusable context files
+│   ├── useful-tool/         #   Example: a third-party tool cloned from someone else
+│   └── ...                  #   Whatever tools you need — no fixed set
 │
 └── dotfiles -> <configured dotfiles path>
 ```

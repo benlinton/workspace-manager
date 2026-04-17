@@ -116,13 +116,11 @@ Each entry in `toolkits/` is its own git repo — a mix of your own published to
 
 ```
 ~/Workspace/toolkits/
-├── shared-context/           # Your repo — reusable context files (graduate to a dedicated context manager as needs grow)
-├── shared-hooks/             # Your repo — hook scripts shared across projects
-├── shared-templates/         # Your repo — project scaffolding templates
-├── my-mcp-server/            # Your repo — an MCP server you built
-├── useful-tool/              # Third-party — cloned from someone else
-├── some-skill-library/       # Third-party — AI agent skills
-└── ...                       # Grows as your AI tooling needs evolve
+├── my-mcp-server/            # Example: an MCP server you built
+├── shared-context/           # Example: reusable context files
+├── shared-hooks/             # Example: hook scripts shared across projects
+├── useful-tool/              # Example: a third-party tool cloned from someone else
+└── ...                       # Whatever tools you need — no fixed set
 ```
 
 ## How tools get into toolkits/

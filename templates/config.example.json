@@ -53,14 +53,6 @@
   "toolkits": {
     "repos": [
       {
-        "url": "git@github.com:you/shared-context.git",
-        "path": "toolkits/shared-context"
-      },
-      {
-        "url": "git@github.com:you/shared-hooks.git",
-        "path": "toolkits/shared-hooks"
-      },
-      {
         "url": "git@github.com:you/my-mcp-server.git",
         "path": "toolkits/my-mcp-server"
       },
