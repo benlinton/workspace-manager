@@ -88,20 +88,24 @@ def cmd_init(args):
     machine_config = get_machine_config(config)
     skip_dirs = set(machine_config.get("skip", []))
 
-    # Step 1: Check if this repo is in the right place
+    # Step 1: Move this repo to the right place if needed
+    global PROJECT_ROOT, CONFIG_DIR, CONFIG_FILE, CONFIG_EXAMPLE
     expected_path = workspace_root / EXPECTED_REPO_PATH
     if PROJECT_ROOT != expected_path:
         print(f"This repo is at: {PROJECT_ROOT}")
         print(f"Expected:        {expected_path}")
         if args.dry_run:
-            print(f"[dry-run] Would move repo to {expected_path}")
+            print(f"  [dry-run] Would move repo to {expected_path}")
         else:
-            print(f"Moving repo to {expected_path}...")
+            print(f"  Moving repo to {expected_path}...")
             expected_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(str(PROJECT_ROOT), str(expected_path))
-            print(f"Moved. Re-run the script from the new location:")
-            print(f"  cd {expected_path} && ./bin/workspace init")
-        return
+            print(f"  Moved.")
+            # Update paths to new location so the rest of init continues
+            PROJECT_ROOT = expected_path
+            CONFIG_DIR = PROJECT_ROOT / "config"
+            CONFIG_FILE = CONFIG_DIR / "config.json"
+            CONFIG_EXAMPLE = PROJECT_ROOT / "templates" / "config.example.json"
 
     # Step 2: Create top-level directories
     print(f"Workspace root: {workspace_root}")
