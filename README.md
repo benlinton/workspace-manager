@@ -74,6 +74,7 @@ cd workspace-manager
 | `workspace config show` | Print config.json to stdout (default) |
 | `workspace config edit` | Open config.json in $EDITOR |
 | `workspace config path` | Print config directory path |
+| &nbsp; | |
 | **Workspace** | |
 | `workspace init` | Create directory tree and clone repos (requires config) |
 | `workspace init --dry-run` | Preview what init would do |
