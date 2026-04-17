@@ -103,8 +103,12 @@ Key fields:
 └── dotfiles -> <configured dotfiles path>
 ```
 
+## Principles
+
+Why the layout is structured this way — depth limits, portability, and grouping logic.
+
 <details>
-<summary><strong>Principles</strong></summary>
+<summary>Details</summary>
 
 ### Two levels to any project, three where it earns its keep
 
@@ -137,8 +141,12 @@ The "who" (org) is a property of code projects and lives one level down inside `
 
 </details>
 
+## Conventions
+
+Per-directory rules for what goes where and how each section is used.
+
 <details>
-<summary><strong>Conventions</strong></summary>
+<summary>Details</summary>
 
 ### code/
 
