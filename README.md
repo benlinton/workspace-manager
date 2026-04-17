@@ -50,7 +50,8 @@ cd workspace-manager
 │   ├── music/               #   Music library
 │   ├── sound-effects/       #   Sound effect libraries
 │   ├── design/              #   Standalone design work (logos, branding, UI mockups)
-│   └── video-editor/    #   Video editor media cache and proxies
+│   ├── video-editor/        #   Video editor media cache and proxies
+│   └── ...                  #   Video plugins, LUTs, templates, stock footage, etc.
 │
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
 │   ├── my-mcp-server/       #   Example: an MCP server you built
