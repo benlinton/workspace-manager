@@ -74,6 +74,7 @@ def download_url(url, dest):
 
 def cmd_init(args):
     """Initialize the workspace: create directory tree and clone repos. Requires config to exist."""
+    global PROJECT_ROOT, CONFIG_DIR, CONFIG_FILE, CONFIG_EXAMPLE
 
     if not CONFIG_FILE.exists():
         print(f"Error: no config found at {CONFIG_FILE}")
@@ -89,7 +90,6 @@ def cmd_init(args):
     skip_dirs = set(machine_config.get("skip", []))
 
     # Step 1: Move this repo to the right place if needed
-    global PROJECT_ROOT, CONFIG_DIR, CONFIG_FILE, CONFIG_EXAMPLE
     expected_path = workspace_root / EXPECTED_REPO_PATH
     if PROJECT_ROOT != expected_path:
         print(f"This repo is at: {PROJECT_ROOT}")
