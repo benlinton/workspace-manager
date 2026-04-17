@@ -35,6 +35,12 @@ cd workspace-manager
 │   ├── third-party/         #   Third-party repos for reference or contribution
 │   └── experiments/         #   Prototypes, experiments, and labs
 │
+├── knowledge/               # PKM, reference material, and filed documents
+│   ├── second-brain/        #   Primary PKM vault (active writing, note-taking)
+│   ├── bytebytego/          #   System design reference (read-mostly)
+│   ├── contracts/           #   Legal agreements (filed)
+│   └── ...                  #   Receipts, admin paperwork, work documents, etc.
+│
 ├── research/                # Research, analysis, and intelligence gathering (non-code)
 │   ├── market-research/     #   Market research and analysis
 │   └── ...                  #   Health analysis, business strategy, deep-dives, etc.
@@ -45,12 +51,6 @@ cd workspace-manager
 │   ├── sound-effects/       #   Sound effect libraries
 │   ├── design/              #   Standalone design work (logos, branding, UI mockups)
 │   └── project-media/       #   Shared media assets and caches
-│
-├── knowledge/               # PKM, reference material, and filed documents
-│   ├── second-brain/        #   Primary PKM vault (active writing, note-taking)
-│   ├── bytebytego/          #   System design reference (read-mostly)
-│   ├── contracts/           #   Legal agreements (filed)
-│   └── ...                  #   Receipts, admin paperwork, work documents, etc.
 │
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
 │   ├── my-mcp-server/       #   Example: an MCP server you built
