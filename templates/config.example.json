@@ -2,6 +2,7 @@
   "machine": "macbook-personal",
   "workspace_root": "~/Workspace",
   "dotfiles": "~/.local/share/chezmoi",
+  "bin_link": "~/.local/bin/workspace",
   "code": {
     "orgs": [
       "personal",

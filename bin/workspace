@@ -170,7 +170,22 @@ def cmd_init(args):
     else:
         print(f"  Skipping dotfiles symlink ({dotfiles_target} not found)")
 
-    # Step 6: Clone repos
+    # Step 6: Symlink workspace command to PATH
+    bin_link_path = config.get("bin_link")
+    if bin_link_path:
+        bin_link = Path(bin_link_path).expanduser()
+        bin_target = PROJECT_ROOT / "bin" / "workspace"
+        if bin_link.exists() or bin_link.is_symlink():
+            print(f"  workspace command symlink exists")
+        else:
+            if args.dry_run:
+                print(f"  [dry-run] Would symlink {bin_link} -> {bin_target}")
+            else:
+                bin_link.parent.mkdir(parents=True, exist_ok=True)
+                bin_link.symlink_to(bin_target)
+                print(f"  Symlinked {bin_link} -> {bin_target}")
+
+    # Step 7: Clone repos
     if not args.dry_run:
         print()
     clone_repos(config, workspace_root, skip_dirs, machine_config, args.dry_run)

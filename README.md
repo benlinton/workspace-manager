@@ -92,6 +92,7 @@ Config lives in `config/config.json` (gitignored). See [templates/config.example
 - **`machine`** — name of this machine (used to look up per-machine settings)
 - **`workspace_root`** — path to workspace root (default: `~/Workspace`)
 - **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
+- **`bin_link`** — optional path to symlink the `workspace` command (e.g., `~/.local/bin/workspace`)
 - **`code.orgs`** — list of org directories to create under `code/`
 - **`code.repos`** / **`research.repos`** / **`knowledge.repos`** / **`toolkits.repos`** — repos to clone, each with `url` and `path`
 - **`studio.categories`** — subdirectories to create under `studio/`
