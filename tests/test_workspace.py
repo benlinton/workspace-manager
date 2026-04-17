@@ -769,5 +769,65 @@ class TestValidate(SafeTestCase):
             # If we got here without SystemExit, exit code is 0
 
 
+class TestErrorHandling(SafeTestCase):
+    def test_load_config_fails_on_bad_json(self):
+        with TemporaryDirectory() as tmpdir:
+            config_file = Path(tmpdir) / "config" / "config.json"
+            config_file.parent.mkdir()
+            config_file.write_text("{invalid json}")
+
+            f = io.StringIO()
+            with patch.object(ws, "CONFIG_FILE", config_file), \
+                 redirect_stdout(f), \
+                 self.assertRaises(SystemExit) as ctx:
+                ws.load_config()
+
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertIn("invalid JSON", f.getvalue())
+
+    def test_load_config_fails_on_missing_repo_fields(self):
+        with TemporaryDirectory() as tmpdir:
+            config_file = Path(tmpdir) / "config" / "config.json"
+            config_file.parent.mkdir()
+            config_file.write_text(json.dumps({
+                "code": {"repos": [{"path": "code/org-1/project"}]}
+            }))
+
+            f = io.StringIO()
+            with patch.object(ws, "CONFIG_FILE", config_file), \
+                 redirect_stdout(f), \
+                 self.assertRaises(SystemExit) as ctx:
+                ws.load_config()
+
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertIn("missing 'url' or 'path'", f.getvalue())
+
+    def test_workspace_root_must_be_absolute(self):
+        config = {"workspace_root": "relative/path"}
+
+        f = io.StringIO()
+        with redirect_stdout(f), \
+             self.assertRaises(SystemExit) as ctx:
+            ws.get_workspace_root(config)
+
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertIn("absolute path", f.getvalue())
+
+    def test_pull_rejects_invalid_section(self):
+        with TemporaryDirectory() as tmpdir:
+            config = make_config(tmpdir)
+            config_file = setup_config(tmpdir, config)
+            args = MagicMock(section="invalid-section")
+
+            f = io.StringIO()
+            with patch.object(ws, "CONFIG_FILE", config_file), \
+                 redirect_stdout(f), \
+                 self.assertRaises(SystemExit) as ctx:
+                ws.cmd_pull(args)
+
+            self.assertEqual(ctx.exception.code, 1)
+            self.assertIn("unknown section", f.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

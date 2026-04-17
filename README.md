@@ -101,7 +101,7 @@ Key fields:
 Why the layout is structured this way — depth limits, portability, and grouping logic.
 
 <details>
-<summary>Details</summary>
+<summary>Expand Details</summary>
 
 ### Two levels to any project, three where it earns its keep
 
@@ -124,7 +124,7 @@ Every top-level directory is activity-based and universal:
 - **studio/** — present on creative workstations
 - **toolkits/** — present wherever you use AI tools
 - **knowledge/** — present wherever you manage personal knowledge, reference material, or documents
-- **dotfiles** — present wherever you manage config
+- **dotfiles** — present wherever you manage system config
 
 Only the contents inside `code/` vary by machine (your work laptop might only have `org-1/`, your personal machine has `personal/` + `org-2/`). The top-level structure is identical everywhere.
 
@@ -139,7 +139,7 @@ The "who" (org) is a property of code projects and lives one level down inside `
 Per-directory rules for what goes where and how each section is used.
 
 <details>
-<summary>Details</summary>
+<summary>Expand Details</summary>
 
 ### code/
 
