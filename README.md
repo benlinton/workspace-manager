@@ -53,7 +53,7 @@ cd workspace-manager
 │   ├── video-editor/        #   Video editor media cache and proxies
 │   └── ...                  #   Video plugins, LUTs, templates, stock footage, etc.
 │
-├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
+├── toolkits/                # AI tools, harnesses, plugins, and shared resources
 │   ├── my-mcp-server/       #   Example: an MCP server you built
 │   ├── shared-context/      #   Example: reusable context files
 │   ├── constitution/        #   Example: a set of rules all AI agents must follow
