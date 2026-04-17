@@ -305,7 +305,7 @@ def cmd_pull(args):
     skip_dirs = set(machine_config.get("skip", []))
     section_filter = args.section if hasattr(args, "section") and args.section else None
 
-    # studio is excluded ��� large binary assets use Git LFS/cloud storage, not git clone
+    # studio is excluded — large binary assets use Git LFS/cloud storage, not git clone
     sections = ["code", "research", "knowledge", "toolkits"]
 
     if section_filter and section_filter not in sections:
