@@ -113,33 +113,28 @@ This tool is very flexible when supporting multiple machine types.
 <details>
 <summary><b>[Expand Details]</b> 👈</summary>
 
-It is easiest to have a single `config.json` and allow the **machine** name to determine what gets loaded.
+A single `config.json` holds settings for all your machines. The `WORKSPACE_MACHINE` variable tells the tool which machine it's running on, so it can apply the right `machines.<name>` overrides.
 
-The most straight forward approach is to check in `config.json` (by removing it from `.gitignore`) and then set `WORKSPACE_MACHINE=` inside `.env` per machine.  In this case you'll likely want to make this repository private.
-
-Alternatively, if you want to keep only your config separate/private, a more advanced approach is to clone a `CONFIG_REPO` as `config/`.
+**Set the machine name** by creating a `.env` file in the project root:
 
 ```
-./bin/workspace config clone git@github.com:you/workspace-config.git
-
-# If your cloned CONFIG_REPO has multiple configs available, for example:                                        
-#   CONFIG_REPO/available/macbook-personal.json
-#   CONFIG_REPO/available/macbook-work.json
-# Symlink the one you want using a relative path.
-ln -s available/macbook-personal.json config/config.json
-
-# If your cloned repo has a single config, 
-#   simply store it as CONFIG_REPO/config.json and skip this step.
-```
-
-In any approach it's recommended to set `.env` per machine.
-
-```
-# Set .env per machine
 echo "WORKSPACE_MACHINE=macbook-personal" > .env
 ```
 
-For machine name, we load `.env` first (recommended), then `export WORKSPACE_MACHINE=` second, and finally `config.json`.
+The tool checks `.env` first, then the `WORKSPACE_MACHINE` env var, then the `machine` field in `config.json`.
+
+**Managing your config** — choose one:
+
+1. **Check in `config.json`** — simplest option. Remove `config/` from `.gitignore` and commit it. You'll likely want to make this repo private.
+
+2. **Clone a separate config repo** — keeps your config private while this repo stays public.
+   ```
+   ./bin/workspace config clone git@github.com:you/workspace-config.git
+   ```
+   If your config repo has multiple configs (e.g. `available/macbook-personal.json`, `available/macbook-work.json`), symlink the one you want:
+   ```
+   ln -s available/macbook-personal.json config/config.json
+   ```
 
 </details>
 
