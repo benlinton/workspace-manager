@@ -677,18 +677,27 @@ class TestPull(SafeTestCase):
 
 
 class TestValidate(SafeTestCase):
+    def _create_full_workspace(self, tmpdir, config):
+        """Helper to create a fully in-sync workspace for validate tests."""
+        workspace_root = Path(tmpdir)
+        for d in ws.TOP_LEVEL_DIRS:
+            (workspace_root / d).mkdir(exist_ok=True)
+        for org in config["code"]["orgs"]:
+            (workspace_root / "code" / org).mkdir(parents=True, exist_ok=True)
+        for repo in (config["code"]["repos"] + config["research"]["repos"] + config["knowledge"]["repos"]):
+            (workspace_root / repo["path"]).mkdir(parents=True, exist_ok=True)
+        # Create dotfiles symlink pointing to a real target
+        dotfiles_target = workspace_root / "fake-dotfiles"
+        dotfiles_target.mkdir()
+        (workspace_root / "dotfiles").symlink_to(dotfiles_target)
+
     def test_validate_passes_when_in_sync(self):
         with TemporaryDirectory() as tmpdir:
             config = make_config(tmpdir)
+            config["dotfiles"] = str(Path(tmpdir) / "fake-dotfiles")
             workspace_root = Path(tmpdir)
 
-            # Create all expected directories
-            for d in ws.TOP_LEVEL_DIRS:
-                (workspace_root / d).mkdir(exist_ok=True)
-            for org in config["code"]["orgs"]:
-                (workspace_root / "code" / org).mkdir(parents=True, exist_ok=True)
-            for repo in (config["code"]["repos"] + config["research"]["repos"] + config["knowledge"]["repos"]):
-                (workspace_root / repo["path"]).mkdir(parents=True, exist_ok=True)
+            self._create_full_workspace(tmpdir, config)
 
             config_file = setup_config(tmpdir, config)
             args = MagicMock()
@@ -723,17 +732,10 @@ class TestValidate(SafeTestCase):
     def test_validate_warns_on_extra_dirs(self):
         with TemporaryDirectory() as tmpdir:
             config = make_config(tmpdir)
+            config["dotfiles"] = str(Path(tmpdir) / "fake-dotfiles")
             workspace_root = Path(tmpdir)
 
-            # Create all expected directories
-            for d in ws.TOP_LEVEL_DIRS:
-                (workspace_root / d).mkdir(exist_ok=True)
-            for org in config["code"]["orgs"]:
-                (workspace_root / "code" / org).mkdir(parents=True, exist_ok=True)
-            for repo in (config["code"]["repos"] + config["research"]["repos"] + config["knowledge"]["repos"]):
-                (workspace_root / repo["path"]).mkdir(parents=True, exist_ok=True)
-
-            # Add an extra directory not in config
+            self._create_full_workspace(tmpdir, config)
             (workspace_root / "code" / "mystery-org").mkdir()
 
             config_file = setup_config(tmpdir, config)
@@ -751,15 +753,10 @@ class TestValidate(SafeTestCase):
     def test_validate_warns_but_exits_zero_for_extras_only(self):
         with TemporaryDirectory() as tmpdir:
             config = make_config(tmpdir)
+            config["dotfiles"] = str(Path(tmpdir) / "fake-dotfiles")
             workspace_root = Path(tmpdir)
 
-            # Create all expected + extra
-            for d in ws.TOP_LEVEL_DIRS:
-                (workspace_root / d).mkdir(exist_ok=True)
-            for org in config["code"]["orgs"]:
-                (workspace_root / "code" / org).mkdir(parents=True, exist_ok=True)
-            for repo in (config["code"]["repos"] + config["research"]["repos"] + config["knowledge"]["repos"]):
-                (workspace_root / repo["path"]).mkdir(parents=True, exist_ok=True)
+            self._create_full_workspace(tmpdir, config)
             (workspace_root / "code" / "extra-org").mkdir()
 
             config_file = setup_config(tmpdir, config)
