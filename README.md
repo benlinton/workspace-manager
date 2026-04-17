@@ -55,6 +55,7 @@ cd workspace-manager
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
 │   ├── my-mcp-server/       #   Example: an MCP server you built
 │   ├── shared-context/      #   Example: reusable context files
+│   ├── constitution/        #   Example: a set of rules all AI agents must follow
 │   ├── useful-tool/         #   Example: a third-party tool cloned from someone else
 │   └── ...                  #   Whatever tools you need — no fixed set
 │
