@@ -65,6 +65,37 @@ Currently `workspace init` clones the default branch and `workspace pull` pulls 
 
 The script would `git checkout` the specified ref after cloning, and `workspace pull` would respect it (pull + checkout ref, or skip pulling pinned repos entirely). Worth building when stability of third-party tools becomes a concern.
 
+## Multiple `bin_link` entries in config
+
+Currently `bin_link` is a single path that symlinks the `workspace` binary. As more standalone tools appear in `toolkits/` (e.g., `placeholder-cli`), each one needs a symlink into `~/.local/bin/`. Doing this manually per machine is fine for one or two tools but doesn't scale.
+
+### What it could look like
+
+Replace the single `bin_link` string with a list:
+
+```json
+{
+  "bin_links": [
+    {
+      "source": "code/personal/workspace-manager/bin/workspace",
+      "target": "~/.local/bin/workspace"
+    },
+    {
+      "source": "toolkits/placeholder-cli/bin/placeholder",
+      "target": "~/.local/bin/placeholder"
+    }
+  ]
+}
+```
+
+`workspace init` would create all symlinks in one pass. `workspace status` could report broken or missing links.
+
+### Questions
+
+- **When does this earn its keep?** One symlink is trivial. Two is fine. At three or four tools this starts saving real time on new machine setup.
+- **Should the target default to `~/.local/bin/<basename>`?** That would shorten most entries to just a source path, since the target is almost always the same pattern.
+- **Backwards compatibility.** The existing single `bin_link` string would need to keep working or be migrated.
+
 ## Should the workspace have a top-level scratch/tmp directory?
 
 A place for unsorted, ephemeral, or throwaway content. Lives inside `~/Workspace/` so it's portable and manageable by toolkits (unlike `/tmp` or `~/Downloads`). Reduces friction when starting quick throwaway work or when you don't know where to put something yet.
@@ -125,3 +156,39 @@ Option 2 is the safest default. Moving preserves history and local branches. The
 - Interactive or batch? Listing candidates and prompting per-repo is safest. A `--dry-run` flag is non-negotiable.
 - Should archived repos be tracked in config so `workspace status` can report them?
 - Could this run on a schedule (e.g., monthly prompt) rather than only on demand?
+
+## `placeholder` — standalone tool for large file references
+
+Large files (raw footage, ML model weights, sample libraries, test fixtures) often live on external storage (NFS, S3) as a single source of truth. Projects that need these files typically copy them locally, duplicating storage for no benefit. A 200GB footage library used by three productions is 600GB of local disk for the same bytes.
+
+`placeholder` is a standalone CLI tool (`bin/placeholder`) that creates lightweight local references to files on external storage — similar to how Git LFS uses pointer files instead of storing large content directly.
+
+### What it does
+
+```bash
+placeholder add ~/Workspace/studio/productions/short-film/footage \
+  --from nfs://nas/footage/short-film-raw
+
+placeholder add ~/Workspace/code/org-1/ml-project/models \
+  --from s3://bucket/models/v2
+
+placeholder list
+placeholder status
+```
+
+The local path looks normal to whatever tool opens it (DaVinci Resolve, Python training script, etc.) but points at the canonical external location instead of duplicating the data.
+
+### Design principles
+
+- **Standalone tool** — its own binary in `bin/`, not a workspace subcommand. Different concern, different tool.
+- **Storage-agnostic** — NFS, S3, and whatever comes next. The pointer abstraction shouldn't be tied to one backend.
+- **Python 3 stdlib only** — consistent with workspace-manager conventions. S3 support may need `boto3` or shelling out to `aws` CLI — open question.
+
+### Open sub-questions
+
+- **Pointer mechanism.** Symlinks work for NFS but not S3. S3 needs a fetch/cache step. Should the tool use symlinks for local/NFS and a download-on-demand model for cloud storage? Or a unified approach (e.g., FUSE mount, stub files with metadata)?
+- **Mount path resolution across machines.** NFS mount points differ between machines (`/Volumes/NAS` on macOS vs. `/mnt/nas` on Linux). The config should store a logical storage name that resolves per-machine, not a hardcoded path.
+- **Offline access.** When external storage is unavailable, symlinks dangle and S3 is unreachable. Should there be a `placeholder cache` subcommand for selective local copies when working offline?
+- **Config location.** Does `placeholder` maintain its own config file, or does it integrate with the workspace-manager config? Leaning toward its own config — it's a separate tool.
+- **Scope boundary.** This tool creates and manages pointers. It does NOT catalog, tag, version, or deduplicate files. If it starts wanting those features, it's becoming a different tool.
+- **Tool compatibility.** Which creative/dev tools handle symlinked directories gracefully? Needs testing per tool (DaVinci Resolve, Ableton, PyTorch data loaders, etc.).
