@@ -15,6 +15,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 CONFIG_DIR = PROJECT_ROOT / "config"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+ENV_FILE = PROJECT_ROOT / ".env"
 CONFIG_EXAMPLE = PROJECT_ROOT / "templates" / "config.example.json"
 DEFAULT_WORKSPACE_ROOT = Path.home() / "Workspace"
 EXPECTED_REPO_PATH = "code/personal/workspace-manager"
@@ -54,8 +55,24 @@ def get_workspace_root(config):
     return expanded
 
 
+def get_machine_name(config):
+    """Get machine name: .env file > WORKSPACE_MACHINE env var > config.json."""
+    if ENV_FILE.exists():
+        for line in ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            key, _, value = line.partition("=")
+            if key.strip() == "WORKSPACE_MACHINE":
+                return value.strip()
+    machine = os.environ.get("WORKSPACE_MACHINE")
+    if machine:
+        return machine
+    return config.get("machine")
+
+
 def get_machine_config(config):
-    machine = config.get("machine")
+    machine = get_machine_name(config)
     if not machine:
         return {}
     return config.get("machines", {}).get(machine, {})
@@ -394,8 +411,8 @@ def cmd_validate(args):
     warnings = []
 
     # Check required config fields
-    if not config.get("machine"):
-        errors.append("Config missing 'machine' field")
+    if not get_machine_name(config):
+        errors.append("Machine name not set (use .env, WORKSPACE_MACHINE env var, or 'machine' in config.json)")
     if not config.get("workspace_root"):
         warnings.append("Config missing 'workspace_root' — using default ~/Workspace")
 
@@ -495,7 +512,7 @@ def cmd_status(args):
     machine_config = get_machine_config(config)
     skip_dirs = set(machine_config.get("skip", []))
 
-    print(f"Machine: {config.get('machine', 'not set')}")
+    print(f"Machine: {get_machine_name(config) or 'not set'}")
     print(f"Workspace: {workspace_root}")
     print(f"Config: {CONFIG_DIR}")
     is_git = (CONFIG_DIR / ".git").exists()

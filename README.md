@@ -12,7 +12,7 @@ cd workspace-manager
 # Set up config (choose one)
 ./bin/workspace config init                          # copy from example template
 ./bin/workspace config download <url>                # download a config file from a URL
-./bin/workspace config clone git@github.com:you/workspace-configs.git  # clone a private config repo
+./bin/workspace config clone git@github.com:you/workspace-config.git  # clone a private config repo
 
 # Edit config with your repos and machine name
 ./bin/workspace config edit
@@ -23,6 +23,20 @@ cd workspace-manager
 # Create directories and clone repos
 ./bin/workspace init
 ```
+
+## Multi-Machine Setup
+
+To support multiple types of machines you have many options - you can use a `CONFIG_REPO` or check in `config.json` (by removing it from `.gitignore`).
+
+```
+# Optional, if your cloned CONFIG_REPO has multiple configs available:                                        
+#   CONFIG_REPO/available/personal.json
+#   CONFIG_REPO/available/workstation.json
+# Symlink the one you want using relative path.
+ln -s available/personal.json config/config.json
+```
+
+And then set the current machine using `export WORKSPACE_MACHINE=macbook` or by creating `.env` and setting `WORKSPACE_MACHINE=macbook`. For machine name only, we load `.env` first (recommended), exported `WORKSPACE_MACHINE` env, and `config.json` last.
 
 ## Example Layout
 
