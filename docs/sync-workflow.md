@@ -17,35 +17,27 @@ Each project is its own git repo. There is no monorepo or sync daemon. Machines 
 | `knowledge/<item>/` | Git, cloud sync, or git clone | PKM vault syncs via cloud or git; reference items cloned via git |
 | `dotfiles` | Symlink to dotfiles manager | Path configured in config.json, defaults to chezmoi |
 
-## Machine manifest
+## Per-machine config
 
-Each machine has a different subset of the workspace. Rather than syncing everything and ignoring what's not needed, clone only what the machine requires.
+Each machine has a different subset of the workspace. The `machines` section of `config.json` controls what gets set up on each machine:
 
-A simple approach: a `machines/` directory in `workspace-manager` (or in dotfiles) with a manifest per machine:
-
-```yaml
-# machines/macbook-personal.yml
-code:
-  - personal/*
-  - org-2/*
-  - third-party/*
-  - experiments/*
-research: all
-studio: all
-toolkits:
-  - shared-context
-  - shared-hooks
-  - my-mcp-server
-knowledge: all
-
-# machines/macbook-work.yml
-code:
-  - org-1/*
-  - third-party/*
-toolkits:
-  - shared-context
-  - shared-hooks
+```json
+{
+  "machine": "macbook-personal",
+  "machines": {
+    "macbook-personal": {
+      "skip": []
+    },
+    "macbook-work": {
+      "skip": ["studio", "research"],
+      "code_orgs": ["org-1", "third-party"]
+    }
+  }
+}
 ```
+
+- **`skip`** — top-level directories to skip entirely on this machine
+- **`code_orgs`** — limit which org directories are created and which code repos are cloned
 
 A bootstrap script reads the manifest and clones the repos. This can be as simple as a shell script or as structured as an Ansible playbook.
 

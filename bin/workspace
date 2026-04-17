@@ -28,13 +28,30 @@ def load_config():
         print(f"Error: {CONFIG_FILE} not found.")
         print(f"Run './bin/workspace config init' to set up config first.")
         sys.exit(1)
-    with open(CONFIG_FILE) as f:
-        return json.load(f)
+    try:
+        with open(CONFIG_FILE) as f:
+            config = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Error: invalid JSON in {CONFIG_FILE}: {e}")
+        sys.exit(1)
+
+    # Validate repo entries have required fields
+    for section in ["code", "research", "knowledge", "toolkits"]:
+        for i, repo in enumerate(config.get(section, {}).get("repos", [])):
+            if "url" not in repo or "path" not in repo:
+                print(f"Error: {section}.repos[{i}] missing 'url' or 'path' in config.")
+                sys.exit(1)
+
+    return config
 
 
 def get_workspace_root(config):
     root = config.get("workspace_root", "~/Workspace")
-    return Path(root).expanduser()
+    expanded = Path(root).expanduser()
+    if not expanded.is_absolute():
+        print(f"Error: workspace_root must be an absolute path, got: {root}")
+        sys.exit(1)
+    return expanded
 
 
 def get_machine_config(config):
@@ -265,7 +282,15 @@ def cmd_config(args):
         if not ok:
             print(f"Error: {err}")
         else:
-            print(f"Downloaded to {CONFIG_FILE}")
+            # Validate it's valid JSON
+            try:
+                with open(CONFIG_FILE) as f:
+                    json.load(f)
+                print(f"Downloaded to {CONFIG_FILE}")
+            except json.JSONDecodeError as e:
+                CONFIG_FILE.unlink()
+                print(f"Error: downloaded file is not valid JSON: {e}")
+                sys.exit(1)
 
 
 def cmd_pull(args):
@@ -280,8 +305,14 @@ def cmd_pull(args):
     skip_dirs = set(machine_config.get("skip", []))
     section_filter = args.section if hasattr(args, "section") and args.section else None
 
-    # studio is excluded — large binary assets use Git LFS/cloud storage, not git clone
+    # studio is excluded ��� large binary assets use Git LFS/cloud storage, not git clone
     sections = ["code", "research", "knowledge", "toolkits"]
+
+    if section_filter and section_filter not in sections:
+        print(f"Error: unknown section '{section_filter}'.")
+        print(f"Valid sections: {', '.join(sections)}")
+        sys.exit(1)
+
     pulled = 0
     errors = 0
 

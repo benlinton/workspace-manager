@@ -36,12 +36,14 @@ cd workspace-manager
 | `workspace config edit` | Open config.json in $EDITOR |
 | `workspace config path` | Print config directory path |
 | **Workspace** | |
-| `workspace init` | Create directory tree and clone repos from config |
+| `workspace init` | Create directory tree and clone repos (requires config) |
 | `workspace init --dry-run` | Preview what init would do |
 | `workspace status` | Show what exists and what's missing |
-| `workspace pull` | Pull latest changes for all repos |
-| `workspace pull <section>` | Pull only repos in a specific section (code, research, etc.) |
+| `workspace pull` | Pull latest changes for all repos (excludes studio) |
+| `workspace pull <section>` | Pull only repos in a specific section (code, research, knowledge, toolkits) |
 | `workspace validate` | Validate config and check directory tree is in sync |
+
+Existing directories are skipped. Existing repos are not re-cloned. Studio projects are excluded from init and pull — they typically use Git LFS or cloud storage.
 
 ## Configuration
 
