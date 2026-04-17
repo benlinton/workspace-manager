@@ -113,7 +113,7 @@ This tool is very flexible when supporting multiple machine types.
 <details>
 <summary><b>[Expand Details]</b> 👈</summary>
 
-A single `config.json` holds settings for all your machines. The `WORKSPACE_MACHINE` variable tells the tool which machine it's running on, so it can apply the right `machines.<name>` overrides.
+A single `config.json` holds settings for all your machines. The `WORKSPACE_MACHINE` variable tells the tool which machine it's running on, so it can apply the specific per-machine overrides.
 
 **Set the machine name** by creating a `.env` file in the project root:
 
@@ -125,13 +125,17 @@ The tool checks `.env` first, then the `WORKSPACE_MACHINE` env var, then the `ma
 
 **Managing your config** — choose one:
 
-1. **Check in `config.json`** — simplest option. Remove `config/` from `.gitignore` and commit it. You'll likely want to make this repo private.
+1. **Check in `config.json`** — simplest option. Remove `config/` from `.gitignore` and commit it. In this case, you'll likely want to make this forked repo private.
 
 2. **Clone a separate config repo** — keeps your config private while this repo stays public.
    ```
    ./bin/workspace config clone git@github.com:you/workspace-config.git
    ```
-   If your config repo has multiple configs (e.g. `available/macbook-personal.json`, `available/macbook-work.json`), symlink the one you want:
+   Simply add a single `config.json` to the separate repo.
+
+3. **Many config files** — for advanced use cases.
+
+   If you desire multiple configs (e.g. `CONFIG_REPO/available/macbook-personal.json`, `CONFIG_REPO/available/macbook-work.json`), follow **Step 2** and then symlink the config you want (using relavite paths):
    ```
    ln -s available/macbook-personal.json config/config.json
    ```
