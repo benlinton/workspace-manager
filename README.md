@@ -50,7 +50,7 @@ cd workspace-manager
 │   ├── music/               #   Music library
 │   ├── sound-effects/       #   Sound effect libraries
 │   ├── design/              #   Standalone design work (logos, branding, UI mockups)
-│   └── project-media/       #   Staged media assets and caches
+│   └── editor-workspace/    #   Video editor media cache and proxies
 │
 ├── toolkits/                # AI tools, harnesses, plugins, and shared resources (each entry is its own repo)
 │   ├── my-mcp-server/       #   Example: an MCP server you built
@@ -167,7 +167,7 @@ Per-directory rules for what goes where and how each section is used.
 - `productions/` contains named video projects (e.g., `my-film-2026/`).
 - `design/` is for standalone design work not tied to a specific production.
 - Production-related design assets stay with their production, not in `design/`.
-- `project-media/` holds shared assets, caches, and clips.
+- `editor-workspace/` holds video editor media cache and proxies.
 - Studio projects are not auto-cloned by the workspace script — they typically use Git LFS, cloud storage, or manual backup due to large binary assets.
 
 ### knowledge/
