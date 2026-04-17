@@ -11,8 +11,8 @@ cd workspace-manager
 
 # Set up config (choose one)
 ./bin/workspace config init                          # copy from example template
-./bin/workspace config clone git@github.com:you/workspace-configs.git  # clone a private config repo
 ./bin/workspace config download <url>                # download a config file from a URL
+./bin/workspace config clone git@github.com:you/workspace-configs.git  # clone a private config repo
 
 # Edit config with your repos and machine name
 ./bin/workspace config edit
