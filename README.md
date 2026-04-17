@@ -92,33 +92,41 @@ Config lives in `config/config.json` (gitignored). See [templates/config.example
 <details>
 <summary><b>[Expand Key Fields]</b> 👈</summary>
 
-- **`machine`** — name of this machine (used to look up per-machine settings); overridden by `WORKSPACE_MACHINE` env
-- **`workspace_root`** — path to workspace root (default: `~/Workspace`)
-- **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
-- **`bin_link`** — optional path to symlink the `workspace` command (e.g., `~/.local/bin/workspace`)
-- **`code.orgs`** — list of org directories to create under `code/`
-- **`code.repos`** / **`research.repos`** / **`knowledge.repos`** / **`toolkits.repos`** — repos to clone, each with `url` and `path`
-- **`studio.categories`** — subdirectories to create under `studio/`
-- **`machines.<name>.skip`** — top-level directories to skip on this machine
-- **`machines.<name>.code_orgs`** — limit which code orgs are set up on this machine
+| Field | Description |
+|---|---|
+| `machine` | Name of this machine (used to look up per-machine settings); overridden by `WORKSPACE_MACHINE` env |
+| `workspace_root` | Path to workspace root (default: `~/Workspace`) |
+| `dotfiles` | Path to your dotfiles directory (default: `~/.local/share/chezmoi`) |
+| `bin_link` | Optional path to symlink the `workspace` command (e.g., `~/.local/bin/workspace`) |
+| `code.orgs` | List of org directories to create under `code/` |
+| `code.repos` / `research.repos` / `knowledge.repos` / `toolkits.repos` | Repos to clone, each with `url` and `path` |
+| `studio.categories` | Subdirectories to create under `studio/` |
+| `machines.<name>.skip` | Top-level directories to skip on this machine |
+| `machines.<name>.code_orgs` | Limit which code orgs are set up on this machine |
 
 </details>
 
 ## Multi-Machine Setup
 
-This tool is very flexible when supporting multiple machine types - the most straight forward approach is to check in `config.json` (by removing it from `.gitignore`) and then set `WORKSPACE_MACHINE=` inside `.env` per machine.
+This tool is very flexible when supporting multiple machine types.
 
 <details>
 <summary><b>[Expand Details]</b> 👈</summary>
 
-If you want to keep your config separate/private, a more advanced approach is to clone a `CONFIG_REPO` as `config/`.
+It is easiest to have a single `config.json` and allow the **machine** name to determine what gets loaded.
+
+The most straight forward approach is to check in `config.json` (by removing it from `.gitignore`) and then set `WORKSPACE_MACHINE=` inside `.env` per machine.  In this case you'll likely want to make this repository private.
+
+Alternatively, if you want to keep only your config separate/private, a more advanced approach is to clone a `CONFIG_REPO` as `config/`.
 
 ```
+./bin/workspace config clone git@github.com:you/workspace-config.git
+
 # If your cloned CONFIG_REPO has multiple configs available, for example:                                        
 #   CONFIG_REPO/available/macbook-personal.json
 #   CONFIG_REPO/available/macbook-work.json
-# Symlink the one you want using relative path.
-ln -s available/personal.json config/config.json
+# Symlink the one you want using a relative path.
+ln -s available/macbook-personal.json config/config.json
 
 # If your cloned repo has a single config, 
 #   simply store it as CONFIG_REPO/config.json and skip this step.
