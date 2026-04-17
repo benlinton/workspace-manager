@@ -17,11 +17,11 @@ cd workspace-manager
 # Edit config with your repos and machine name
 ./bin/workspace config edit
 
-# Create directories and clone repos
-./bin/workspace init
-
 # Preview what init would do without making changes
 ./bin/workspace init --dry-run
+
+# Create directories and clone repos
+./bin/workspace init
 ```
 
 ## Example Layout
