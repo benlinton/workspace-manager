@@ -45,20 +45,6 @@ cd workspace-manager
 
 Existing directories are skipped. Existing repos are not re-cloned. Studio projects are excluded from init and pull — they typically use Git LFS or cloud storage.
 
-## Configuration
-
-Config lives in `config/config.json` (gitignored). See [templates/config.example.json](templates/config.example.json) for the full schema.
-
-Key fields:
-- **`machine`** — name of this machine (used to look up per-machine settings)
-- **`workspace_root`** — path to workspace root (default: `~/Workspace`)
-- **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
-- **`code.orgs`** — list of org directories to create under `code/`
-- **`code.repos`** / **`research.repos`** / **`knowledge.repos`** / **`toolkits.repos`** — repos to clone, each with `url` and `path`
-- **`studio.categories`** — subdirectories to create under `studio/`
-- **`machines.<name>.skip`** — top-level directories to skip on this machine
-- **`machines.<name>.code_orgs`** — limit which code orgs are set up on this machine
-
 ## Layout
 
 ```
@@ -95,6 +81,24 @@ Key fields:
 │
 └── dotfiles -> <configured dotfiles path>
 ```
+
+## Configuration
+
+Config lives in `config/config.json` (gitignored). See [templates/config.example.json](templates/config.example.json) for the full schema.
+
+<details>
+<summary>Expand Key Fields</summary>
+
+- **`machine`** — name of this machine (used to look up per-machine settings)
+- **`workspace_root`** — path to workspace root (default: `~/Workspace`)
+- **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
+- **`code.orgs`** — list of org directories to create under `code/`
+- **`code.repos`** / **`research.repos`** / **`knowledge.repos`** / **`toolkits.repos`** — repos to clone, each with `url` and `path`
+- **`studio.categories`** — subdirectories to create under `studio/`
+- **`machines.<name>.skip`** — top-level directories to skip on this machine
+- **`machines.<name>.code_orgs`** — limit which code orgs are set up on this machine
+
+</details>
 
 ## Principles
 
