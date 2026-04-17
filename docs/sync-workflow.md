@@ -43,11 +43,11 @@ A bootstrap script reads the manifest and clones the repos. This can be as simpl
 
 ## Path portability
 
-The workspace root is always `~/Workspace/`. This is a hard convention — no machine-specific prefixes. This means:
+The workspace root is configurable via `workspace_root` in config.json, but should be the same path on every machine. Use `~` so the path is user-agnostic (e.g., `~/Workspace` works regardless of username). This means:
 
-- Absolute paths in CLAUDE.md `@path` imports work everywhere: `@~/Workspace/toolkits/shared-context/foo.md`
-- Each tool in `toolkits/` is its own git repo — your own tools and third-party tools cloned from others
-- If a machine doesn't need a tool, just don't clone it
+- Absolute paths in `@path` imports and tool references work everywhere: `@~/Workspace/toolkits/shared-context/foo.md`
+- Config files can be shared across machines without editing paths
+- Each tool in `toolkits/` is its own git repo — if a machine doesn't need a tool, just don't clone it
 
 ## Large files and creative assets
 
