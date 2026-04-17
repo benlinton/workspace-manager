@@ -41,7 +41,7 @@ cd workspace-manager
 │   ├── bytebytego/          #   Example system design reference (read-only)
 │   └── ...                  #   Documents, guides, runbooks, courses, help, etc.
 │
-├── research/                # One-off research, analysis, and intelligence gathering
+├── research/                # Single-use research, analysis, and intelligence gathering
 │   ├── market-research/     #   Market research and analysis
 │   └── ...                  #   Health analysis, business strategy, deep-dives, etc.
 │
