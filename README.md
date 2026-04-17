@@ -22,7 +22,7 @@ $EDITOR config/config.json
 ./bin/workspace init --dry-run
 ```
 
-### Alternative config setup
+### Recommended config setup
 
 Instead of editing the example, you can pull config from a private repo or URL:
 
