@@ -433,6 +433,28 @@ def cmd_validate(args):
             if not full_path.exists():
                 errors.append(f"Missing repo: {rel_path}")
 
+    # Check symlinks point to correct targets
+    dotfiles_link = workspace_root / "dotfiles"
+    dotfiles_target_str = config.get("dotfiles", "~/.local/share/chezmoi")
+    dotfiles_target = Path(dotfiles_target_str).expanduser()
+    if dotfiles_link.is_symlink():
+        actual = Path(os.readlink(str(dotfiles_link)))
+        if actual != dotfiles_target:
+            warnings.append(f"Stale symlink: dotfiles -> {actual} (config says {dotfiles_target})")
+    elif not dotfiles_link.exists():
+        errors.append(f"Missing dotfiles symlink")
+
+    bin_link_path = config.get("bin_link")
+    if bin_link_path:
+        bin_link = Path(bin_link_path).expanduser()
+        bin_target = PROJECT_ROOT / "bin" / "workspace"
+        if bin_link.is_symlink():
+            actual = Path(os.readlink(str(bin_link)))
+            if actual != bin_target:
+                warnings.append(f"Stale symlink: {bin_link} -> {actual} (expected {bin_target})")
+        elif not bin_link.exists():
+            errors.append(f"Missing bin_link symlink: {bin_link}")
+
     # Check for extra directories not in config (warnings only)
     for d in TOP_LEVEL_DIRS:
         if d in skip_dirs:
