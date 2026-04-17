@@ -5,19 +5,19 @@ A CLI tool and design system for organizing `~/Workspace/` across machines.
 ## Quick Start
 
 ```bash
-# 1. Clone this repo
+# Clone this repo
 git clone https://github.com/benlinton/workspace-manager.git
 cd workspace-manager
 
-# 2. Set up config (choose one)
+# Set up config (choose one)
 ./bin/workspace config init                          # copy from example template
 ./bin/workspace config clone git@github.com:you/workspace-configs.git  # clone a private config repo
 ./bin/workspace config download <url>                # download a config file from a URL
 
-# 3. Edit config with your repos and machine name
+# Edit config with your repos and machine name
 ./bin/workspace config edit
 
-# 4. Create directories and clone repos
+# Create directories and clone repos
 ./bin/workspace init
 
 # Preview what init would do without making changes
