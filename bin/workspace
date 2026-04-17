@@ -26,7 +26,7 @@ TOP_LEVEL_DIRS = ["code", "research", "studio", "knowledge", "toolkits"]
 def load_config():
     if not CONFIG_FILE.exists():
         print(f"Error: {CONFIG_FILE} not found.")
-        print(f"Run './bin/workspace init' to set up config.")
+        print(f"Run './bin/workspace config init' to set up config first.")
         sys.exit(1)
     with open(CONFIG_FILE) as f:
         return json.load(f)
@@ -56,65 +56,22 @@ def download_url(url, dest):
 
 
 def cmd_init(args):
-    """Initialize the workspace: set up config, move repo if needed, create tree, clone repos."""
+    """Initialize the workspace: create directory tree and clone repos. Requires config to exist."""
 
-    # Step 1: Set up config if it doesn't exist
     if not CONFIG_FILE.exists():
-        if hasattr(args, "config_repo") and args.config_repo:
-            # Clone private config repo into config/
-            if CONFIG_DIR.exists():
-                print(f"Error: {CONFIG_DIR} exists but has no config.json.")
-                print(f"Remove it or add a config.json manually.")
-                return
-            print(f"Cloning config repo...")
-            result = subprocess.run(
-                ["git", "clone", args.config_repo, str(CONFIG_DIR)],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                print(f"Error cloning config repo: {result.stderr.strip()}")
-                sys.exit(1)
-            print(f"Cloned config repo to {CONFIG_DIR}")
-            if not CONFIG_FILE.exists():
-                print(f"Warning: cloned repo has no config.json. Add one and re-run.")
-                return
-        elif hasattr(args, "config_url") and args.config_url:
-            # Download config from a URL
-            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-            print(f"Downloading config from {args.config_url}...")
-            ok, err = download_url(args.config_url, CONFIG_FILE)
-            if not ok:
-                print(f"Error downloading config: {err}")
-                sys.exit(1)
-            print(f"Downloaded to {CONFIG_FILE}")
-        elif CONFIG_EXAMPLE.exists():
-            print(f"No config.json found. Copying from example...")
-            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-            shutil.copy(str(CONFIG_EXAMPLE), str(CONFIG_FILE))
-            print(f"Created {CONFIG_FILE}")
-            print(f"Edit it with your repos and machine name,")
-            print(f"then run './bin/workspace init' again.")
-            print()
-            print(f"To use an existing config instead:")
-            print(f"  ./bin/workspace init --config-repo <git-url>   # clone a config repo")
-            print(f"  ./bin/workspace init --config-url <url>        # download a single file")
-            return
-        else:
-            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-            print(f"No config.json or example found.")
-            print(f"Options:")
-            print(f"  1. Add a config.json to {CONFIG_DIR}")
-            print(f"  2. ./bin/workspace init --config-repo <git-url>")
-            print(f"  3. ./bin/workspace init --config-url <url>")
-            return
+        print(f"Error: no config found at {CONFIG_FILE}")
+        print(f"Set up config first:")
+        print(f"  ./bin/workspace config init                          # copy from example template")
+        print(f"  ./bin/workspace config clone <git-url>               # clone a private config repo")
+        print(f"  ./bin/workspace config download <url>                # download a config file")
+        sys.exit(1)
 
     config = load_config()
     workspace_root = get_workspace_root(config)
     machine_config = get_machine_config(config)
     skip_dirs = set(machine_config.get("skip", []))
 
-    # Step 2: Check if this repo is in the right place
+    # Step 1: Check if this repo is in the right place
     expected_path = workspace_root / EXPECTED_REPO_PATH
     if PROJECT_ROOT != expected_path:
         print(f"This repo is at: {PROJECT_ROOT}")
@@ -129,7 +86,7 @@ def cmd_init(args):
             print(f"  cd {expected_path} && ./bin/workspace init")
         return
 
-    # Step 3: Create top-level directories
+    # Step 2: Create top-level directories
     print(f"Workspace root: {workspace_root}")
     for d in TOP_LEVEL_DIRS:
         if d in skip_dirs:
@@ -145,7 +102,7 @@ def cmd_init(args):
                 dir_path.mkdir(parents=True, exist_ok=True)
                 print(f"  Created {d}/")
 
-    # Step 4: Create org directories under code/
+    # Step 3: Create org directories under code/
     if "code" not in skip_dirs:
         orgs = config.get("code", {}).get("orgs", [])
         code_orgs_filter = machine_config.get("code_orgs")
@@ -163,7 +120,7 @@ def cmd_init(args):
                     org_path.mkdir(parents=True, exist_ok=True)
                     print(f"  Created code/{org}/")
 
-    # Step 5: Create studio category directories
+    # Step 4: Create studio category directories
     if "studio" not in skip_dirs:
         categories = config.get("studio", {}).get("categories", [])
         for cat in categories:
@@ -177,7 +134,7 @@ def cmd_init(args):
                     cat_path.mkdir(parents=True, exist_ok=True)
                     print(f"  Created studio/{cat}/")
 
-    # Step 6: Create dotfiles symlink
+    # Step 5: Create dotfiles symlink
     dotfiles_target_str = config.get("dotfiles", "~/.local/share/chezmoi")
     dotfiles_target = Path(dotfiles_target_str).expanduser()
     dotfiles_link = workspace_root / "dotfiles"
@@ -192,7 +149,7 @@ def cmd_init(args):
     else:
         print(f"  Skipping dotfiles symlink ({dotfiles_target} not found)")
 
-    # Step 7: Clone repos
+    # Step 6: Clone repos
     if not args.dry_run:
         print()
     clone_repos(config, workspace_root, skip_dirs, machine_config, args.dry_run)
@@ -245,17 +202,31 @@ def clone_repos(config, workspace_root, skip_dirs, machine_config, dry_run):
 
 
 def cmd_config(args):
-    """Show, edit, clone, or download the config."""
-    if args.config_action == "show":
+    """Manage the workspace config file."""
+    if args.config_action == "init":
+        if CONFIG_FILE.exists():
+            print(f"Config already exists at {CONFIG_FILE}")
+            return
+        if CONFIG_EXAMPLE.exists():
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            shutil.copy(str(CONFIG_EXAMPLE), str(CONFIG_FILE))
+            print(f"Created {CONFIG_FILE} from example template.")
+            print(f"Edit it with your repos and machine name:")
+            print(f"  ./bin/workspace config edit")
+        else:
+            CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            print(f"No example template found.")
+            print(f"Add a config.json to {CONFIG_DIR} manually.")
+    elif args.config_action == "show":
         if not CONFIG_FILE.exists():
-            print(f"No config found. Run './bin/workspace init' to set up.")
+            print(f"No config found. Run './bin/workspace config init' to set up.")
             return
         with open(CONFIG_FILE) as f:
             print(f.read())
     elif args.config_action == "edit":
         editor = os.environ.get("EDITOR", "vim")
         if not CONFIG_FILE.exists():
-            print(f"No config found. Run './bin/workspace init' to set up.")
+            print(f"No config found. Run './bin/workspace config init' to set up.")
             return
         subprocess.run([editor, str(CONFIG_FILE)])
     elif args.config_action == "path":
@@ -300,7 +271,7 @@ def cmd_config(args):
 def cmd_pull(args):
     """Pull latest changes for all repos in the workspace."""
     if not CONFIG_FILE.exists():
-        print("No config found. Run './bin/workspace init' to set up.")
+        print("No config found. Run './bin/workspace config init' to set up.")
         return
 
     config = load_config()
@@ -355,7 +326,7 @@ def cmd_pull(args):
 def cmd_validate(args):
     """Validate config and check workspace tree against config."""
     if not CONFIG_FILE.exists():
-        print("No config found. Run './bin/workspace init' to set up.")
+        print("No config found. Run './bin/workspace config init' to set up.")
         sys.exit(1)
 
     # Config validation
@@ -444,7 +415,7 @@ def cmd_validate(args):
 def cmd_status(args):
     """Show workspace status: what exists, what's missing."""
     if not CONFIG_FILE.exists():
-        print("No config found. Run './bin/workspace init' to set up.")
+        print("No config found. Run './bin/workspace config init' to set up.")
         return
 
     config = load_config()
@@ -489,15 +460,14 @@ def main():
         prog="workspace",
         description="Bootstrap and maintain ~/Workspace/ across machines.",
         epilog="""
-config setup (choose one):
-  Copy from example:   ./bin/workspace init
-  Clone a config repo: ./bin/workspace init --config-repo <git-url>
-  Download a file:     ./bin/workspace init --config-url <url>
+getting started:
+  1. ./bin/workspace config init          # set up config from template
+  2. ./bin/workspace config edit          # customize with your repos
+  3. ./bin/workspace init                 # create directories and clone repos
 
-The config lives in config/config.json (gitignored). It can be:
-  - A plain file copied from templates/config.example.json
-  - Part of a git-cloned private config repo in config/
-  - Downloaded from a URL (e.g. raw GitHub file from a config library)
+or use a private config repo:
+  1. ./bin/workspace config clone <url>   # clone your config repo
+  2. ./bin/workspace init                 # create directories and clone repos
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -506,18 +476,12 @@ The config lives in config/config.json (gitignored). It can be:
     # init
     init_parser = subparsers.add_parser(
         "init",
-        help="Initialize the workspace",
-        description="Set up config, create directory tree, and clone repos.",
+        help="Create directory tree and clone repos from config",
+        description="Create the workspace directory tree and clone repos. "
+                    "Requires config to exist — run 'workspace config init' first.",
         epilog="""
-config sources (mutually exclusive):
-  No flags:       copy from templates/config.example.json
-  --config-repo:  git clone a private repo into config/
-  --config-url:   download a single config.json from a URL
-
 examples:
   ./bin/workspace init
-  ./bin/workspace init --config-repo git@github.com:you/workspace-configs.git
-  ./bin/workspace init --config-url https://raw.githubusercontent.com/you/configs/main/macbook.json
   ./bin/workspace init --dry-run
 """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -526,22 +490,15 @@ examples:
         "--dry-run", action="store_true",
         help="show what would be done without doing it",
     )
-    init_parser.add_argument(
-        "--config-repo", dest="config_repo",
-        help="git URL of a private config repo to clone into config/",
-    )
-    init_parser.add_argument(
-        "--config-url", dest="config_url",
-        help="URL to download a config.json file from (e.g. raw GitHub URL)",
-    )
 
     # config
     config_parser = subparsers.add_parser(
         "config",
-        help="Show, edit, clone, or download config",
-        description="Manage the workspace config file.",
+        help="Manage config (init, show, edit, clone, download)",
+        description="Set up and manage the workspace config file.",
         epilog="""
 actions:
+  init            create config from example template
   show (default)  print config.json to stdout
   edit            open config.json in $EDITOR
   path            print the config directory path
@@ -549,7 +506,7 @@ actions:
   download <url>  download a config.json from a URL
 
 examples:
-  ./bin/workspace config
+  ./bin/workspace config init
   ./bin/workspace config edit
   ./bin/workspace config clone git@github.com:you/workspace-configs.git
   ./bin/workspace config download https://raw.githubusercontent.com/you/configs/main/macbook.json
@@ -560,7 +517,7 @@ examples:
         "config_action",
         nargs="?",
         default="show",
-        choices=["show", "edit", "path", "clone", "download"],
+        choices=["init", "show", "edit", "path", "clone", "download"],
         help="action to perform (default: show)",
     )
     config_parser.add_argument(

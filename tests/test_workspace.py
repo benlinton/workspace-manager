@@ -421,8 +421,8 @@ class TestDryRun(SafeTestCase):
             self.assertEqual(existing, {"code", "config"})
 
 
-class TestConfigGeneration(SafeTestCase):
-    def test_init_copies_example_when_no_config(self):
+class TestConfigInit(SafeTestCase):
+    def test_config_init_copies_example(self):
         with TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir) / "config"
             templates_dir = Path(tmpdir) / "templates"
@@ -430,61 +430,45 @@ class TestConfigGeneration(SafeTestCase):
             example_file = templates_dir / "config.example.json"
             example_file.write_text('{"machine": "example"}')
 
-            args = MagicMock(dry_run=False, config_repo=None, config_url=None)
+            args = MagicMock(config_action="init", url=None)
 
             with patch.object(ws, "CONFIG_DIR", config_dir), \
                  patch.object(ws, "CONFIG_FILE", config_dir / "config.json"), \
                  patch.object(ws, "CONFIG_EXAMPLE", example_file):
-                ws.cmd_init(args)
+                ws.cmd_config(args)
 
             config_file = config_dir / "config.json"
             self.assertTrue(config_file.exists())
             data = json.loads(config_file.read_text())
             self.assertEqual(data["machine"], "example")
 
-    def test_init_clones_config_repo(self):
+    def test_config_init_refuses_if_exists(self):
         with TemporaryDirectory() as tmpdir:
             config_dir = Path(tmpdir) / "config"
-            args = MagicMock(dry_run=False, config_repo="git@github.com:test/config.git", config_url=None)
-
-            mock_run = MagicMock(return_value=MagicMock(returncode=0))
-
-            with patch.object(ws, "CONFIG_DIR", config_dir), \
-                 patch.object(ws, "CONFIG_FILE", config_dir / "config.json"), \
-                 patch("subprocess.run", mock_run):
-                ws.cmd_init(args)
-
-            clone_calls = [
-                c for c in mock_run.call_args_list
-                if c[0][0][0] == "git" and c[0][0][1] == "clone"
-            ]
-            self.assertEqual(len(clone_calls), 1)
-            self.assertIn("git@github.com:test/config.git", clone_calls[0][0][0])
-
-    def test_init_downloads_config_from_url(self):
-        with TemporaryDirectory() as tmpdir:
-            config_dir = Path(tmpdir) / "config"
+            config_dir.mkdir()
             config_file = config_dir / "config.json"
-            workspace_root = Path(tmpdir)
-            project_root = workspace_root / "code" / "personal" / "workspace-manager"
-            project_root.mkdir(parents=True, exist_ok=True)
-            args = MagicMock(dry_run=False, config_repo=None, config_url="https://example.com/config.json")
+            config_file.write_text('{"machine": "existing"}')
 
-            def fake_download(url, dest):
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_text('{"machine": "downloaded", "workspace_root": "' + tmpdir + '"}')
-                return True, None
+            args = MagicMock(config_action="init", url=None)
 
+            f = io.StringIO()
             with patch.object(ws, "CONFIG_DIR", config_dir), \
                  patch.object(ws, "CONFIG_FILE", config_file), \
-                 patch.object(ws, "PROJECT_ROOT", project_root), \
-                 patch.object(ws, "download_url", side_effect=fake_download), \
-                 patch("subprocess.run", return_value=MagicMock(returncode=0)):
+                 redirect_stdout(f):
+                ws.cmd_config(args)
+
+            self.assertIn("already exists", f.getvalue())
+
+    def test_init_requires_config(self):
+        with TemporaryDirectory() as tmpdir:
+            config_file = Path(tmpdir) / "config" / "config.json"
+            args = MagicMock(dry_run=False)
+
+            with patch.object(ws, "CONFIG_FILE", config_file), \
+                 self.assertRaises(SystemExit) as ctx:
                 ws.cmd_init(args)
 
-            self.assertTrue(config_file.exists())
-            data = json.loads(config_file.read_text())
-            self.assertEqual(data["machine"], "downloaded")
+            self.assertEqual(ctx.exception.code, 1)
 
 
 class TestConfigClone(SafeTestCase):

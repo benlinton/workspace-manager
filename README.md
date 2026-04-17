@@ -5,50 +5,40 @@ A CLI tool and design system for organizing `~/Workspace/` across machines.
 ## Quick Start
 
 ```bash
-# Clone this repo
+# 1. Clone this repo
 git clone https://github.com/benlinton/workspace-manager.git
 cd workspace-manager
 
-# Generates a local config from the example template.
-# Consider using a private config repo instead — see "Recommended config setup" below.
-./bin/workspace init
+# 2. Set up config (choose one)
+./bin/workspace config init                          # copy from example template
+./bin/workspace config clone git@github.com:you/workspace-configs.git  # clone a private config repo
+./bin/workspace config download <url>                # download a config file from a URL
 
-# Edit the generated config with your repos and machine name
-$EDITOR config/config.json
+# 3. Edit config with your repos and machine name
+./bin/workspace config edit
 
-# Run init again to create directories and clone repos
+# 4. Create directories and clone repos
 ./bin/workspace init
 
 # Preview what init would do without making changes
 ./bin/workspace init --dry-run
 ```
 
-### Recommended config setup
-
-Instead of editing the example, you can pull config from a private repo or URL:
-
-```bash
-# Clone a private config repo into config/
-./bin/workspace init --config-repo git@github.com:you/workspace-configs.git
-
-# Download a single config file from a URL
-./bin/workspace init --config-url https://raw.githubusercontent.com/you/configs/main/macbook.json
-```
-
 ## Commands
 
 | Command | Description |
 |---|---|
-| `workspace init` | Create directory tree and clone repos from config |
-| `workspace init --dry-run` | Preview what init would do |
-| `workspace init --config-repo <url>` | Clone a private config repo |
-| `workspace init --config-url <url>` | Download config from a URL |
-| `workspace status` | Show what exists and what's missing |
-| `workspace config` | Print config.json to stdout |
+| **Config** | |
+| `workspace config init` | Create config from example template |
+| `workspace config clone <url>` | Clone a private config repo into config/ |
+| `workspace config download <url>` | Download a config.json from a URL |
+| `workspace config show` | Print config.json to stdout (default) |
 | `workspace config edit` | Open config.json in $EDITOR |
 | `workspace config path` | Print config directory path |
-| `workspace config clone <url>` | Clone a config repo into config/ |
-| `workspace config download <url>` | Download a config.json from a URL |
+| **Workspace** | |
+| `workspace init` | Create directory tree and clone repos from config |
+| `workspace init --dry-run` | Preview what init would do |
+| `workspace status` | Show what exists and what's missing |
 | `workspace pull` | Pull latest changes for all repos |
 | `workspace pull <section>` | Pull only repos in a specific section (code, research, etc.) |
 | `workspace validate` | Validate config and check directory tree is in sync |
