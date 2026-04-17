@@ -24,20 +24,6 @@ cd workspace-manager
 ./bin/workspace init
 ```
 
-## Multi-Machine Setup
-
-To support multiple types of machines you have many options - you can use a `CONFIG_REPO` or check in `config.json` (by removing it from `.gitignore`).
-
-```
-# Optional, if your cloned CONFIG_REPO has multiple configs available:                                        
-#   CONFIG_REPO/available/personal.json
-#   CONFIG_REPO/available/workstation.json
-# Symlink the one you want using relative path.
-ln -s available/personal.json config/config.json
-```
-
-And then set the current machine using `export WORKSPACE_MACHINE=macbook` or by creating `.env` and setting `WORKSPACE_MACHINE=macbook`. For machine name only, we load `.env` first (recommended), exported `WORKSPACE_MACHINE` env, and `config.json` last.
-
 ## Example Layout
 
 ```
@@ -106,7 +92,7 @@ Config lives in `config/config.json` (gitignored). See [templates/config.example
 <details>
 <summary><b>[Expand Key Fields]</b> 👈</summary>
 
-- **`machine`** — name of this machine (used to look up per-machine settings)
+- **`machine`** — name of this machine (used to look up per-machine settings); overridden by `WORKSPACE_MACHINE` env
 - **`workspace_root`** — path to workspace root (default: `~/Workspace`)
 - **`dotfiles`** — path to your dotfiles directory (default: `~/.local/share/chezmoi`)
 - **`bin_link`** — optional path to symlink the `workspace` command (e.g., `~/.local/bin/workspace`)
@@ -115,6 +101,37 @@ Config lives in `config/config.json` (gitignored). See [templates/config.example
 - **`studio.categories`** — subdirectories to create under `studio/`
 - **`machines.<name>.skip`** — top-level directories to skip on this machine
 - **`machines.<name>.code_orgs`** — limit which code orgs are set up on this machine
+
+</details>
+
+## Multi-Machine Setup
+
+This tool is very flexible when supporting multiple machine types - the most straight forward approach is to check in `config.json` (by removing it from `.gitignore`) and then set `WORKSPACE_MACHINE=` inside `.env` per machine.
+
+<details>
+<summary><b>[Expand Details]</b> 👈</summary>
+
+If you want to keep your config separate/private, a more advanced approach is to clone a `CONFIG_REPO` as `config/`.
+
+```
+# If your cloned CONFIG_REPO has multiple configs available, for example:                                        
+#   CONFIG_REPO/available/macbook-personal.json
+#   CONFIG_REPO/available/macbook-work.json
+# Symlink the one you want using relative path.
+ln -s available/personal.json config/config.json
+
+# If your cloned repo has a single config, 
+#   simply store it as CONFIG_REPO/config.json and skip this step.
+```
+
+In any approach it's recommended to set `.env` per machine.
+
+```
+# Set .env per machine
+echo "WORKSPACE_MACHINE=macbook-personal" > .env
+```
+
+For machine name, we load `.env` first (recommended), then `export WORKSPACE_MACHINE=` second, and finally `config.json`.
 
 </details>
 
