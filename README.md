@@ -90,7 +90,7 @@ Existing directories are skipped. Existing repos are not re-cloned. Studio proje
 Config lives in `config/config.json` (gitignored). See [templates/config.example.json](templates/config.example.json) for the full schema.
 
 <details>
-<summary><b>Expand Key Fields</b> 📌</summary>
+<summary><b>Expand Key Fields</b> 👈</summary>
 
 - **`machine`** — name of this machine (used to look up per-machine settings)
 - **`workspace_root`** — path to workspace root (default: `~/Workspace`)
@@ -109,7 +109,7 @@ Config lives in `config/config.json` (gitignored). See [templates/config.example
 Why the layout is structured this way — depth limits, portability, and grouping logic.
 
 <details>
-<summary><b>Expand Details</b> 📌</summary>
+<summary><b>Expand Details</b> 👈</summary>
 
 ### Two levels to any project, three where it earns its keep
 
@@ -147,7 +147,7 @@ The "who" (org) is a property of code projects and lives one level down inside `
 Per-directory rules for what goes where and how each section is used.
 
 <details>
-<summary><b>Expand Details</b> 📌</summary>
+<summary><b>Expand Details</b> 👈</summary>
 
 ### code/
 
