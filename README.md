@@ -193,11 +193,11 @@ Per-directory rules for what goes where and how each section is used.
 
 </details>
 
-## Documentation
+## Additional Docs
 
-- [docs/workspace-design.md](docs/workspace-design.md) — Design principles and rationale
-- [docs/ai-tooling.md](docs/ai-tooling.md) — AI tool integration and toolkits
-- [docs/sync-workflow.md](docs/sync-workflow.md) — Multi-machine sync strategy
+- [workspace-design](docs/workspace-design.md) — Design principles and rationale
+- [ai-tooling](docs/ai-tooling.md) — AI tool integration and toolkits
+- [sync-workflow](docs/sync-workflow.md) — Multi-machine sync strategy
 
 ## License
 
