@@ -59,7 +59,7 @@ cd workspace-manager
 │   ├── useful-tool/         #   Example: a third-party tool cloned from someone else
 │   └── ...                  #   Whatever tools you need — no fixed set
 │
-└── dotfiles -> <configured dotfiles path>
+└── dotfiles -> <symlinked dotfiles path> 
 ```
 
 ## Commands
