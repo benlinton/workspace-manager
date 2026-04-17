@@ -43,7 +43,7 @@ A bootstrap script reads the manifest and clones the repos. This can be as simpl
 
 ## Path portability
 
-The workspace root is configurable via `workspace_root` in config.json, but should be the same path on every machine. Use `~` so the path is user-agnostic (e.g., `~/Workspace` works regardless of username). This means:
+The workspace root is configurable via `workspace_root` in config.json, but should be the same path on every machine. Ideally use `~` so the path is user-agnostic (e.g., `~/Workspace` works regardless of username). This means:
 
 - Absolute paths in `@path` imports and tool references work everywhere: `@~/Workspace/toolkits/shared-context/foo.md`
 - Config files can be shared across machines without editing paths
